@@ -34,7 +34,7 @@ deploy:
 run: |
   sshpass -p "${SSH_KEY}" ssh -o StrictHostKeyChecking=no ${SSH_USERNAME}@${SSH_HOST} << 'EOF'
   cd /root/onpar/
-  git pull origin master
+  git pull origin main
   npm install
   npm run build
   systemctl restart nginx
