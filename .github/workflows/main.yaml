@@ -35,8 +35,12 @@ jobs:
           sshpass -p "${SSH_KEY}" ssh -tt -o StrictHostKeyChecking=no ${SSH_USERNAME}@${SSH_HOST} << 'EOF'
           cd /root/onpar/
           git pull origin main
+          cd frontend/onpar
           npm install
           npm run build
+          cd
+          cd /root/onpar/backend
+          npm install
           systemctl restart nginx
 
   
