@@ -20,7 +20,7 @@ jobs:
       run: npm install
 deploy:
     needs: build
-    [cite_start]runs-on: ubuntu-latest # 
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -31,12 +31,12 @@ deploy:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_USERNAME : ${{secrets.SSH_USERNAME}}
-run: |
-  sshpass -p "${SSH_KEY}" ssh -o StrictHostKeyChecking=no ${SSH_USERNAME}@${SSH_HOST} << 'EOF'
-  cd /root/onpar/
-  git pull origin main
-  npm install
-  npm run build
-  systemctl restart nginx
+        run: |
+          sshpass -p "${SSH_KEY}" ssh -o StrictHostKeyChecking=no ${SSH_USERNAME}@${SSH_HOST} << 'EOF'
+          cd /root/onpar/
+          git pull origin main
+          npm install
+          npm run build
+          systemctl restart nginx
 
   
