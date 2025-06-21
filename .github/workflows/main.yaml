@@ -32,7 +32,7 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_USERNAME : ${{secrets.SSH_USERNAME}}
         run: |
-          sshpass -p "${SSH_KEY}" ssh -tt -o StrictHostKeyChecking=no ${SSH_USERNAME}@${SSH_HOST} << 'EOF'
+          sshpass -p "${SSH_KEY}" ssh -o StrictHostKeyChecking=no ${SSH_USERNAME}@${SSH_HOST} << 'EOF'
           cd /root/onpar/
           git pull origin main
           cd frontend/onpar
