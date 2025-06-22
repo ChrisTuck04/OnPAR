@@ -38,6 +38,8 @@ jobs:
           cd frontend/onpar
           npm install
           npm run build
+          sudo rm -rf /var/www/mern-frontend/*
+          sudo cp -r dist/* /var/www/mern-frontend/
           cd
           cd /root/onpar/backend
           npm install
