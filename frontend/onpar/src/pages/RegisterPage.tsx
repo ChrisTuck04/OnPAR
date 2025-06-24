@@ -24,7 +24,7 @@ const RegisterPage = () => {
       navigate("/register-success");
     } catch (err: unknown) {
       const error = err as AxiosError<{ error: string }>;
-      alert(error.response?.data?.error || "Login failed");
+      alert(error.response?.data?.error || "Registration failed");
     }
   };
   
@@ -50,7 +50,7 @@ const RegisterPage = () => {
                 placeholder={`Enter ${field}...`}
                 value={form[field]}
                 onChange={handleChange}
-                className="p-4 rounded-lg border border-black text-black placeholder-gray-400"
+                className="w-full p-4 rounded-lg border border-black text-black placeholder-gray-400"
               />
             </div>
           ))}
