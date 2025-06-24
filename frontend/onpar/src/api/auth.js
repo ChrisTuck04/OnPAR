@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/auth"; // adjust if deployed
+const API_URL = "http://onpar.life/auth";
 
 export const registerUser = async (userData) => {
   const response = await axios.post(`${API_URL}/register`, userData);
