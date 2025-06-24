@@ -1,4 +1,4 @@
-const ResetPassword = () => {
+const ResetPasswordPage = () => {
   return (
     <div>
       ResetPassword
@@ -6,4 +6,4 @@ const ResetPassword = () => {
   )
 }
 
-export default ResetPassword
+export default ResetPasswordPage

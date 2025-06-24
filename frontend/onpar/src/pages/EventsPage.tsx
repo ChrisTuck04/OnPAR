@@ -1,6 +1,6 @@
 import React from 'react'
 
-const EventsPages = () => {
+const EventsPage = () => {
   return (
     <div>
       EventsPage
@@ -8,4 +8,4 @@ const EventsPages = () => {
   )
 }
 
-export default EventsPages
+export default EventsPage
