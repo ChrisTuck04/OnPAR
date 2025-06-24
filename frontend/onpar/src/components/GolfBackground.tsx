@@ -3,6 +3,7 @@ import React from 'react'
 const GolfBackground = () => {
   return (
     <div>
+      <img src="/assets/GolfBackground.png"/>
     </div>
   )
 }

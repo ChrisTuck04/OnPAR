@@ -15,7 +15,7 @@ const YellowButton = ({to} : buttonNavigation) => {
 
     return (
     <div>
-        <button onClick={nav} className="p-5 rounded-lg border-4 border-onparOrange bg-onparLightYellow hover:bg-onparOrange relative w-[193px] h-[52px] font-fredoka text-black text-lg flex items-center justify-center">
+        <button onClick={nav} className="p-5 rounded-2xl border-2 border-onparOrange bg-onparLightYellow hover:bg-onparOrange relative w-[193px] h-[52px] font-fredoka text-black text-lg flex items-center justify-center">
             Login
         </button>
     </div>
