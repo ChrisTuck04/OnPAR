@@ -1,12 +1,31 @@
-import { useNavigate } from "react-router"
+import YellowButton from "../components/YellowButton"
+import Title from "../components/Title"
+import GolfBackground from "../components/GolfBackground"
+import Clouds from "../components/Clouds"
+import Sun from "../components/Sun"
 
 const HomePage = () => {
-  const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-        <div className="font-fredoka text-white" style={{WebkitTextStroke: '2px black'}}>
-            <button className="text-9xl" onClick={() => navigate('/login')}>Hello</button>
+    <div className="relative min-h-screen flex items-center justify-center">
+        <div className="absolute top-[255px] w-screen">
+          <GolfBackground/>
+        </div>
+
+        <div className="absolute top-[20px] w-[800px]">
+          <Clouds/>
+        </div>
+
+        <div className="absolute top-4 left-4">
+          <Sun/>
+        </div>
+
+        <div className="absolute top-[125px]">
+          <Title/>
+        </div>
+
+        <div className="absolute top-4 right-4">
+          <YellowButton to="/login"/>
         </div>
     </div>
   )

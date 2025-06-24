@@ -1,10 +1,6 @@
-import React from 'react'
-
-const RegisterPage = () => {
+export const RegisterPage = () => {
   return (
-    <div>
-      RegisterPage
-    </div>
+    <div>Register</div>
   )
 }
 
