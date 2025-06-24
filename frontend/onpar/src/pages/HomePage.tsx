@@ -25,7 +25,7 @@ const HomePage = () => {
         </div>
 
         <div className="absolute top-4 right-4">
-          <YellowButton to="/login"/>
+          <YellowButton to="/login" text="Login"/>
         </div>
     </div>
   )
