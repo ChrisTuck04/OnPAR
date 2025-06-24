@@ -1,27 +1,22 @@
-import express, { Request, Response } from "express";
+const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-import User from "../models/User";
+const User = require("../models/User");
 require("dotenv").config();
 
 const router = express.Router();
 
 // Register API
-router.post("/register", async (req: Request, res: Response): Promise<void> =>
-{
+router.post("/register", async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
 
-  try
-  {
-    // Check if user already exists
+  try {
     const existingUser = await User.findOne({ email });
-    if (existingUser)
-    {
-        res.status(409).json({ error: "Email already registered" });
-        return;
+    if (existingUser) {
+      res.status(409).json({ error: "Email already registered" });
+      return;
     }
 
-    // Hash password and create new user
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new User({
       firstName,
@@ -31,34 +26,27 @@ router.post("/register", async (req: Request, res: Response): Promise<void> =>
       isVerified: false,
     });
 
-    // Save User to DB
     const savedUser = await newUser.save();
     res.status(201).json({ message: `User ${savedUser.email} registered successfully` });
-  }
-  catch (error)
-  {
+  } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to register user" });
   }
 });
 
 // Login API
-router.post("/login", async (req: Request, res: Response): Promise<void> =>
-{
+router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
-  try
-  {
+  try {
     const user = await User.findOne({ email });
-    if (!user)
-    {
+    if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isPasswordValid)
-    {
+    if (!isPasswordValid) {
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
@@ -68,11 +56,9 @@ router.post("/login", async (req: Request, res: Response): Promise<void> =>
     });
 
     res.status(200).json({ token });
-  }
-  catch (error)
-  {
+  } catch (error) {
     res.status(500).json({ error: "Failed to log in" });
   }
 });
 
-export default router;
+module.exports = router;

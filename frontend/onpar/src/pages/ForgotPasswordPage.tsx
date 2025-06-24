@@ -1,9 +1,7 @@
-const ForgotPasswordPage = () => {
+const CalendarPage = () => {
   return (
-    <div>
-      ForgotPasswordPage
-    </div>
+    <div className="min-h-screen flex items-center justify-center">FORGOT PASSWORD?</div>
   )
 }
 
-export default ForgotPasswordPage
+export default CalendarPage
