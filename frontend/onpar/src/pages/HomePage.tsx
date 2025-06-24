@@ -8,15 +8,15 @@ const HomePage = () => {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center">
-        <div className="absolute top-[255px] w-screen">
+        <div className="fixed bottom-0  w-screen ">
           <GolfBackground/>
         </div>
 
-        <div className="absolute top-[20px] w-[800px]">
+        <div className="fixed top-[25px] w-[800px]">
           <Clouds/>
         </div>
 
-        <div className="absolute top-4 left-4">
+        <div className="fixed top-4 left-4">
           <Sun/>
         </div>
 
