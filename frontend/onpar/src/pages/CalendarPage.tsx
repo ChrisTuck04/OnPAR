@@ -1,6 +1,6 @@
 const CalendarPage = () => {
   return (
-    <div>CalendarPage</div>
+    <div className="min-h-screen flex items-center justify-center">CalendarPage</div>
   )
 }
 
