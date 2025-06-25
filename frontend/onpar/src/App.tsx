@@ -7,6 +7,7 @@ import JournalPage from './pages/JournalPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import RegisterSuccessPage from './pages/RegisterSuccessPage';
 
 const App = () => {
   return (
@@ -18,8 +19,9 @@ const App = () => {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/journal" element={<JournalPage />} />
-        <Route path="/resetPassword" element={<ResetPasswordPage />} />
-        <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/register-success" element={<RegisterSuccessPage />} />
       </Routes>
     </div>
   );
