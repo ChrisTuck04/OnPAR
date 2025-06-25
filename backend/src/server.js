@@ -7,8 +7,19 @@ const authRoutes = require("./routes/auth");
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://onpar.life"
+];
+
 app.use(cors({
-  origin: "http://onpar.life",
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 
