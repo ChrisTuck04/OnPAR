@@ -2,9 +2,40 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { randomUUID } = require('crypto');
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const router = express.Router();
+
+// Email setup
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS, 
+  },
+});
+
+// Helper function for sending email
+const sendVerificationEmail = async (email, verificationToken) => {
+  const verificationLink = `${process.env.BASE_URL}/auth/verify-email?token=${verificationToken}`; // Adjust BASE_URL as needed
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Verify Your Email for Your Application",
+    html: `
+      <p>Hello,</p>
+      <p>Thank you for choosing OnPAR! Please click the following link to verify your email address:</p>
+      <p><a href="${verificationLink}">Verify Email</a></p>
+      <p>This link will expire in 24 hours.</p>
+      <p>If you did not register for this account, please ignore this email.</p>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
 
 // Register API
 router.post("/register", async (req, res) => {
@@ -18,21 +49,57 @@ router.post("/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const verificationToken = randomUUID();
+    const verificationTokenExpires = Date.now() + 1000 * 60 * 60 * 24;
+
     const newUser = new User({
       firstName,
       lastName,
       email,
       passwordHash: hashedPassword,
       isVerified: false,
+      verificationToken: verificationToken,
+      verificationTokenExpires: verificationTokenExpires,
     });
 
     const savedUser = await newUser.save();
+    
+    await sendVerificationEmail(savedUser.email, verificationToken);
+
     res.status(201).json({ message: `User ${savedUser.email} registered successfully` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to register user" });
   }
 });
+
+// Email Verification API
+router.get("/verify-email", async (req, res) => {
+  const { token } = req.query;
+
+  try {
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpires: { $gt: Date.now() },
+    })
+
+    if(!user)
+    {
+      return res.status(400).json({ error: "Invalid or expired verification token." });
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationTokenExpires = undefined;
+    await user.save();
+    res.status(200).json({message: "Email verified successfully! You can now log in."});
+  }
+  catch (error)
+  {
+    console.error("Email verification error:", error);
+    res.status(500).json({ error: "Failed to verify email." });
+  }
+})
 
 // Login API
 router.post("/login", async (req, res) => {
@@ -43,6 +110,10 @@ router.post("/login", async (req, res) => {
     if (!user) {
       res.status(404).json({ error: "User not found" });
       return;
+    }
+    
+    if (!user.isVerified) {
+      return res.status(403).json({ error: "Please verify your email before logging in." });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
