@@ -6,7 +6,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   passwordHash: { type: String, required: true },
   isVerified: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  verificationToken: { type: String },
+  verificationTokenExpires: { type: Date },
+  emotion: { type: Number}
 });
 
 const User = mongoose.model("User", userSchema);

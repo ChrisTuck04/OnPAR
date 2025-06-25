@@ -7,10 +7,7 @@ const authRoutes = require("./routes/auth");
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
-app.use(cors({
-  origin: "http://onpar.life",
-  credentials: true,
-}));
+app.use(cors());
 
 app.use(express.json());
 
