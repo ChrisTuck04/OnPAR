@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import RegisterSuccessPage from './pages/RegisterSuccessPage';
 import VerificationSuccessPage from './pages/VerificationSuccessPage';
+import VerificationFailurePage from './pages/VerificationFailurePage';
 
 const App = () => {
   return (
@@ -23,7 +24,8 @@ const App = () => {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/register-success" element={<RegisterSuccessPage />} />
-        <Route path="/auth/verify-email" element={< VerificationSuccessPage />} /> 
+        <Route path="/verification-success" element={<VerificationSuccessPage />} />
+        <Route path="/verification-failure" element={<VerificationFailurePage />} />
       </Routes>
     </div>
   );

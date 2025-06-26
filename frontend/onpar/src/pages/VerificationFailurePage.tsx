@@ -1,5 +1,4 @@
 const VerificationSuccessPage = () => {
-
   return (
     <div className="min-h-screen">
       <div className="font-fredoka p-8 rounded-lg flex flex-col items-center justify-center max-w-3xl mx-auto">
@@ -13,10 +12,10 @@ const VerificationSuccessPage = () => {
           className="text-white text-3xl mb-8"
           style={{ WebkitTextStroke: "1px black" }}
         >
-          Email Verified Successfully!
+            Invalid or Expired Verification Token
         </h2>
         <p className="text-white text-2xl mb-10" style={{ WebkitTextStroke: "1px black" }}>
-          You may now close this tab and login!
+            Resend Below!
         </p>
       </div>
     </div>
