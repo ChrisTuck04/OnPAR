@@ -105,6 +105,40 @@ router.get("/verify-email", async (req, res) => {
   }
 })
 
+//Resend Verification Email API
+router.post("/resend-verification-email", async (req, res) => {
+  const { email } = req.body;
+
+  try
+  {
+    const user = await User.findOne({email});
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    if(user.isVerified)
+    {
+      return res.status(400).json({ message: "Email is already verified." });
+    }
+
+    const newVerificationToken = randomUUID();
+    const newVerificationTokenExpires = Date.now() + 1000 * 60 * 60 * 24;
+
+    user.verificationToken = newVerificationToken;
+    user.verificationTokenExpires = newVerificationTokenExpires;
+    await user.save();
+
+    await sendVerificationEmail(user.email, newVerificationToken);
+
+    res.status(200).json({ message: "Verification email re-sent successfully." });
+  }
+  catch(error)
+  {
+    console.error("Error re-sending verification email:", error);
+    res.status(500).json({ error: "Failed to re-send verification email." });
+  }
+});
+
 // Login API
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
