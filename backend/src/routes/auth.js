@@ -3,28 +3,20 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { randomUUID } = require('crypto');
-const nodemailer = require("nodemailer");
+const sgMail = require('@sendgrid/mail');
 require("dotenv").config();
 
 const router = express.Router();
 
 // Email setup
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // Use true for port 465 (SSL)
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  }
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Helper function for sending email
 const sendVerificationEmail = async (email, verificationToken) => {
   const verificationLink = `${process.env.BASE_URL}/auth/verify-email?token=${verificationToken}`; // Adjust BASE_URL as needed
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
+  const message = {
+    from: process.env.SENDGRID_SENDER_EMAIL,
     to: email,
     subject: "Verify Your Email for Your Application",
     html: `
@@ -36,7 +28,17 @@ const sendVerificationEmail = async (email, verificationToken) => {
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await sgMail.send(message);
+    console.log(`Verification email sent to ${email} via SendGrid`);
+  } catch (emailError) {
+    console.error(`Error sending verification email to ${email} via SendGrid:`, emailError);
+    // SendGrid errors often have a response property with more details
+    if (emailError.response) {
+      console.error(emailError.response.body);
+    }
+    throw new Error('Failed to send verification email via SendGrid.');
+  }
 };
 
 // Register API
