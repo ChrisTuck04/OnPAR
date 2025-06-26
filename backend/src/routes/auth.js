@@ -13,7 +13,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // Helper function for sending email
 const sendVerificationEmail = async (email, verificationToken) => {
-  const verificationLink = `${process.env.BASE_URL}/auth/verify-email-api?token=${verificationToken}`; // Adjust BASE_URL as needed
+  const verificationLink = `${process.env.BASE_URL}/verify-email-api?token=${verificationToken}`; // Adjust BASE_URL as needed
 
   const message = {
     from: process.env.SENDGRID_SENDER_EMAIL,
