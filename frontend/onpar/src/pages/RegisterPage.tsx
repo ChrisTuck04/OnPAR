@@ -21,7 +21,7 @@ const RegisterPage = () => {
     e.preventDefault();
     try {
       await registerUser(form);
-      navigate("/register-success");
+      navigate("/register-success", { state: { email: form.email } });
     } catch (err: unknown) {
       const error = err as AxiosError<{ error: string }>;
       alert(error.response?.data?.error || "Registration failed");

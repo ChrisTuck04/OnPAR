@@ -89,19 +89,19 @@ router.get("/verify-email", async (req, res) => {
 
     if(!user)
     {
-      return res.status(400).json({ error: "Invalid or expired verification token." });
+      return res.redirect(`${process.env.FRONTEND_URL}/auth/verify-email?token=invalid`);
     }
 
     user.isVerified = true;
     user.verificationToken = undefined;
     user.verificationTokenExpires = undefined;
     await user.save();
-    res.status(200).json({message: "Email verified successfully! You can now log in."});
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/verify-email?token=valid`);
   }
   catch (error)
   {
     console.error("Email verification error:", error);
-    res.status(500).json({ error: "Failed to verify email." });
+    return res.redirect(`${process.env.FRONTEND_URL}/auth/verify-email?token=invalid`);
   }
 })
 

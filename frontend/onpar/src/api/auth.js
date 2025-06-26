@@ -11,3 +11,8 @@ export const loginUser = async (credentials) => {
   const response = await axios.post(`${API_URL}/login`, credentials);
   return response.data;
 };
+
+export const resendVerification = async (email) => {
+  const response = await axios.post(`${API_URL}/resend-verification-email`,  { email });
+  return response.data;
+};
