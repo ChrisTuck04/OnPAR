@@ -10,7 +10,7 @@ const VerificationSuccessPage = () => {
           OnPAR
         </h1>
         <h2
-          className="text-white text-3xl mb-8"
+          className="text-green-500 text-3xl mb-8"
           style={{ WebkitTextStroke: "1px black" }}
         >
           Email Verified Successfully!

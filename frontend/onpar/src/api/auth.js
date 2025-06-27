@@ -1,7 +1,6 @@
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL;
 
 export const registerUser = async (userData) => {
   const response = await axios.post(`${API_URL}/register`, userData);

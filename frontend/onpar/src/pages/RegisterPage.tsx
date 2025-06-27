@@ -6,7 +6,9 @@ import { registerUser } from "../api/auth.js"; // adjust the path as needed
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-    const [form, setForm] = useState({
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     email: "",
@@ -37,15 +39,14 @@ const RegisterPage = () => {
       <img src="/assets/bigCloud.png" className="absolute top-[78px] right-[300px] w-30" />
         <h2 className="text-white text-7xl mb-4 mt-2 text-center" style={{ WebkitTextStroke: '1px black' }}>Register</h2>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-          {(Object.keys(form) as (keyof typeof form)[]).map((field) => (
+          {(["firstName", "lastName", "email"] as const).map((field) => (
             <div key={field}>
               <h2 className="text-white text-2xl text-center" style={{ WebkitTextStroke: '1px black' }}>
                 {field === "firstName" ? "First Name" :
-                 field === "lastName" ? "Last Name" :
-                 field === "email" ? "Email" : "Password"}
+                 field === "lastName" ? "Last Name" : "Email"}
               </h2>
               <input
-                type={field === "password" ? "password" : field === "email" ? "email" : "text"}
+                type={field === "email" ? "email" : "text"}
                 name={field}
                 placeholder={`Enter ${field}...`}
                 value={form[field]}
@@ -54,6 +55,28 @@ const RegisterPage = () => {
               />
             </div>
           ))}
+
+          <div>
+            <h2 className="text-white text-2xl text-center" style={{ WebkitTextStroke: '1px black' }}>Password</h2>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter password..."
+                value={form.password}
+                onChange={handleChange}
+                className="w-full p-4 rounded-lg border border-black text-black placeholder-gray-400"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-sm text-black hover:underline"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+
           <div className="flex flex-row justify-between">
             <button
               type="button"

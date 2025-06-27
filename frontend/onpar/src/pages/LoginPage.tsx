@@ -7,10 +7,11 @@ import { loginUser } from "../api/auth"; // adjust the path as needed
 const LoginPage = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
 
-const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setForm({ ...form, [e.target.name]: e.target.value });
-};
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,20 +44,38 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             className="p-4 rounded-lg border border-black text-black placeholder-gray-400"
           />
           <h2 className="text-white text-2xl text-center" style={{ WebkitTextStroke: '1px black' }}>Password</h2>
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Password"
-            className="p-4 rounded-lg border border-black text-black placeholder-gray-400"
-          />
-          <button
-            type="submit"
-            className="p-4 text-2xl rounded-lg border-4 border-onparOrange bg-onparLightYellow hover:bg-onparOrange text-black font-bold transition"
-          >
-            Log In
-          </button>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Password"
+              className="w-full p-4 rounded-lg border border-black text-black placeholder-gray-400"
+            />
+            <button 
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-sm text-black hover:underline"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+          <div className="flex flex-row justify-between">
+            <button
+              type="button"
+              className="p-4 text-2xl rounded-lg border-4 border-onparOrange bg-onparLightYellow hover:bg-onparOrange text-black font-bold transition"
+              onClick={() => navigate('/')}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="p-4 text-2xl rounded-lg border-4 border-onparOrange bg-onparLightYellow hover:bg-onparOrange text-black font-bold transition"
+            >
+              Log In
+            </button>
+          </div>
         </form>
         <div className="mt-6 flex flex-col gap-2 text-center">
           <Link to="/forgot-password" className="text-black text-xl hover:underline">
@@ -68,7 +87,7 @@ const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default LoginPage
+export default LoginPage;
