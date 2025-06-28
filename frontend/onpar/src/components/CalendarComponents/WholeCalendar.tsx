@@ -5,7 +5,7 @@ import CalendarGrid from "./CalendarGrid"
 const WholeCalendar = () => {
   return (
     <div 
-    className="relative border-[5px] border-onparOrange bg-onparLightYellow w-[753px] h-[670px] rounded-[40px] drop-shadow-lg" >
+    className="relative border-[5px] border-onparOrange bg-onparLightYellow min-w-[753px] min-h-[670px] rounded-[40px] drop-shadow-lg" >
       
       <div>
         <CalendarHeading/>
