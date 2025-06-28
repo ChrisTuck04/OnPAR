@@ -38,7 +38,7 @@ const CalendarPage = () => {
 
   return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="fixed bottom-11 z-10">
+        <div className="fixed snap-center z-10">
           {calendar && <WholeCalendar/>}
         </div>
 
