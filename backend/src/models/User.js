@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   verificationToken: { type: String },
   verificationTokenExpires: { type: Date },
+  resetToken: {type: String },
+  resetTokenExpires: { type: Date },
   emotion: { type: Number}
 });
 
