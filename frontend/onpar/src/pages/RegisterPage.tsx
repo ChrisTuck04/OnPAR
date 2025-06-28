@@ -33,10 +33,10 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className=" font-fredoka w-full max-w-md rounded-lg">
-      <img src="/assets/clouds.png" className="absolute top-[78px] left-[220px] w-30" />
-      <img src="/assets/sun.png" className="absolute top-20 left-10 w-48" />
-      <img src="/assets/smallCloud.png" className="absolute top-[250px] right-[150px] w-30" />
-      <img src="/assets/bigCloud.png" className="absolute top-[78px] right-[300px] w-30" />
+      <img src="/assets/clouds.png" className="absolute top-[78px] left-[220px] w-48 hidden lg:block" />
+      <img src="/assets/sun.png" className="absolute top-20 left-10 w-32 hidden lg:block" />
+      <img src="/assets/smallCloud.png" className="absolute top-[250px] right-[150px] w-16 hidden lg:block" />
+      <img src="/assets/bigCloud.png" className="absolute top-[78px] right-[300px] w-28 hidden lg:block" />
         <h2 className="text-white text-7xl mb-4 mt-2 text-center" style={{ WebkitTextStroke: '1px black' }}>Register</h2>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
           {(["firstName", "lastName", "email"] as const).map((field) => (
