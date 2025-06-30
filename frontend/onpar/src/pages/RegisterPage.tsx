@@ -15,12 +15,51 @@ const RegisterPage = () => {
     password: ""
   });
 
+  const [errors, setErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: ""
+  });
+
+  const validateForm = () => {
+    const newErrors = { firstName: "", lastName: "", email: "", password: "" };
+    let isValid = true;
+
+    if (form.firstName.trim().length < 2) {
+      newErrors.firstName = "First name must be at least 2 characters.";
+      isValid = false;
+    }
+
+    if (form.lastName.trim().length < 2) {
+      newErrors.lastName = "Last name must be at least 2 characters.";
+      isValid = false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      newErrors.email = "Please enter a valid email address.";
+      isValid = false;
+    }
+
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,}$/;
+    if (!passwordRegex.test(form.password)) {
+      newErrors.password = "Password must be at least 8 characters and include a special character and a number.";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!validateForm()) return;
     try {
       await registerUser(form);
       navigate("/register-success", { state: { email: form.email } });
@@ -53,6 +92,9 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 className="w-full p-4 rounded-lg border border-black text-black placeholder-gray-400"
               />
+              {errors[field] && (
+                <p className="text-red-600 text-sm mt-1 text-center">{errors[field]}</p>
+              )}
             </div>
           ))}
 
@@ -75,6 +117,9 @@ const RegisterPage = () => {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-red-600 text-sm mt-1 text-center">{errors.password}</p>
+            )}
           </div>
 
           <div className="flex flex-row justify-between">

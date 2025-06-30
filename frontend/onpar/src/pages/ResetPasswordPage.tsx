@@ -14,9 +14,16 @@ const ResetPasswordPage = () => {
   const query = new URLSearchParams(location.search);
   const token = query.get("token");
 
+  const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,}$/;
+
   const handleReset = async () => {
-    if(!password || password !== confirm) {
-      setMessage("Passwords must match and not be empty.");
+    if (!passwordRegex.test(password)) {
+      setMessage("Password must be at least 8 characters and include a special character and a number.");
+      return;
+    }
+
+    if(password !== confirm) {
+      setMessage("Passwords must match.");
       return;
     }
 
@@ -78,7 +85,9 @@ const ResetPasswordPage = () => {
         >
           Reset Password
         </button>
-        <p className="text-black text-center">{message}</p>
+        {message && (
+            <p className="text-red-600 text-center mt-2">{message}</p>
+          )}
         </div>
       </div>
     </div>
