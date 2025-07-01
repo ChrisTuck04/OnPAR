@@ -1,1 +1,0 @@
-// register new user, log in and issue JWT token, verify/reset password

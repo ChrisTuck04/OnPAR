@@ -1,20 +1,23 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const { connectDB } = require("./config/db");
+const authRoutes = require("./routes/auth");
 
 const app = express();
-const PORT: number = Number(process.env.PORT) || 5000;
+const PORT = Number(process.env.PORT) || 5000;
 
-// Middleware
 app.use(cors());
+
 app.use(express.json());
 
-// Routes
-app.get("/", (req: any, res: any) => {
+connectDB();
+app.use("/auth", authRoutes);
+
+app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
