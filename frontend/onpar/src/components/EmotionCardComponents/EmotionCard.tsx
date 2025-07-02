@@ -1,29 +1,32 @@
 import EmotionButton from "./EmotionButton"
 
-
 interface Props{
     CardVisibility: (e: React.MouseEvent<HTMLButtonElement>) => void
+    Happy: (e: React.MouseEvent<HTMLButtonElement>) => void
+    Pleasant: (e: React.MouseEvent<HTMLButtonElement>) => void
+    Sad: (e: React.MouseEvent<HTMLButtonElement>) => void
+    Angry: (e: React.MouseEvent<HTMLButtonElement>) => void
 }
 
-const EmotionCard = ({CardVisibility}: Props) => {
-  return (
-    <div className="relative flex items-center justify-center border-[5px] border-onparOrange bg-onparLightYellow w-[700px] h-[400px] rounded-[40px] font-fredoka" style={{WebkitTextStroke: "1px #FFAA00"}}>
-        <p className="absolute top-[80px] text-[30px]">
+
+const EmotionCard = ({Happy, Pleasant, Sad, Angry}: Props) => {
+
+    return (
+    <div className="flex items-center justify-center border-[10px] border-onparOrange bg-onparLightYellow w-[700px] h-[400px] rounded-[40px] font-fredoka">
+        <p className="absolute top-[80px] text-[30px]" style={{WebkitTextStroke: "1px #FFAA00"}}>
             How are We Feeling Today?
         </p>
 
-        <button className="absolute top-4 right-4 w-[120px] h-[50px] hover:bg-onparOrange border-[3px] border-onparOrange bg-onparLightYellow rounded-[30px]" onClick={CardVisibility}>
-            close
-        </button>
-
-        <div className="grid grid-cols-4">
-            <EmotionButton image="/assets/HappyEmotion.png" emotion="Happy" color="text-yellow" />
-            <EmotionButton image="/assets/PleasantEmotion.png" emotion="Pleasant" color="text-red" />
-            <EmotionButton image="/assets/SadEmotion.png" emotion="Sad" color="text-purple" />
-            <EmotionButton image="/assets/AngryEmotion.png" emotion="Angry" color="text-red" />
+        <div className="absolute grid grid-cols-4 ">
+            
+            <EmotionButton image="/assets/HappyEmotion.png" emotion="Happy" color="text-orange-500" ThemeChange={Happy}/>
+            <EmotionButton image="/assets/PleasantEmotion.png" emotion="Pleasant" color="text-green-600" ThemeChange={Pleasant}/>
+            <EmotionButton image="/assets/SadEmotion.png" emotion="Sad" color="text-blue-600" ThemeChange={Sad}/>
+            <EmotionButton image="/assets/AngryEmotion.png" emotion="Angry" color="text-red-600" ThemeChange={Angry}/> 
+            
         </div>
     </div>
-  )
+    )
 }
 
 export default EmotionCard

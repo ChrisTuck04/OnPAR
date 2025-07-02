@@ -11,6 +11,8 @@ export default {
         onparLightGreen: '#96D97A',
         onparLightYellow: '#FAE75F',
         onparOrange: '#FFAA00',
+        onparSadBlue: '#547792',
+        onparGray: '#7F8CAA',
       },
      },
    },
