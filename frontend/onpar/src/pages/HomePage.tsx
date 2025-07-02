@@ -1,8 +1,8 @@
 import YellowButton from "../components/General/YellowButton"
 import Title from "../components/HomePageComponents/Title"
 import GolfBackground from "../components/General/GolfBackground"
-import Clouds from "../components/PleasantComponents/Clouds"
-import Sun from "../components/PleasantComponents/Sun"
+import Clouds from "../components/CalendarPage/PleasantComponents/Clouds"
+import Sun from "../components/CalendarPage/PleasantComponents/Sun"
 
 const HomePage = () => {
 

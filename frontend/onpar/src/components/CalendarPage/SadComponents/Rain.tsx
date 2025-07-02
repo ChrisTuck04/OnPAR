@@ -1,5 +1,5 @@
 import Lottie from "lottie-react"
-import rain from "../../assets/animations/raining.json"
+import rain from "../../../assets/animations/raining.json"
 
 const Rain = () => {
   return (

@@ -1,11 +1,11 @@
 import LogoutButton from '../components/Logout.tsx';
 import GolfBackground from "../components/General/GolfBackground"
-import WholeCalendar from "../components/CalendarComponents/WholeCalendar"
-import EmotionCard from "../components/EmotionCardComponents/EmotionCard.tsx"
-import HappyTheme from '../components/HappyComponents/HappyTheme.tsx';
-import SadTheme from '../components/SadComponents/SadTheme.tsx';
-import PleasantTheme from '../components/PleasantComponents/PleasantTheme.tsx';
-import AngryTheme from '../components/AngryComponents/AngryTheme.tsx';
+import WholeCalendar from "../components/CalendarPage/CalendarComponents/WholeCalendar.tsx"
+import EmotionCard from "../components/CalendarPage/EmotionCardComponents/EmotionCard.tsx"
+import HappyTheme from '../components/CalendarPage/HappyComponents/HappyTheme.tsx';
+import SadTheme from '../components/CalendarPage/SadComponents/SadTheme.tsx';
+import PleasantTheme from '../components/CalendarPage/PleasantComponents/PleasantTheme.tsx';
+import AngryTheme from '../components/CalendarPage/AngryComponents/AngryTheme.tsx';
 import { useState } from 'react';
 
 
