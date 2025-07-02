@@ -3,7 +3,12 @@ const mongoose = require("mongoose");
 const eventSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
   content: { type: String, required: true, trim: true },
-  createdAt: { type: Date, default: Date.now }
+  startTime: { type: Date },
+  endTime: { type: Date },
+  recurring: { type: Boolean },
+  userId: { type: mongoose.Schema.Types.ObjectId },
+  sharedEmails: { type: [String] },
+  color: { type: Number }
 });
 
 const Event = mongoose.model("Event", eventSchema);

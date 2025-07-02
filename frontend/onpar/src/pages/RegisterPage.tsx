@@ -15,12 +15,51 @@ const RegisterPage = () => {
     password: ""
   });
 
+  const [errors, setErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: ""
+  });
+
+  const validateForm = () => {
+    const newErrors = { firstName: "", lastName: "", email: "", password: "" };
+    let isValid = true;
+
+    if (form.firstName.trim().length < 2) {
+      newErrors.firstName = "First name must be at least 2 characters.";
+      isValid = false;
+    }
+
+    if (form.lastName.trim().length < 2) {
+      newErrors.lastName = "Last name must be at least 2 characters.";
+      isValid = false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      newErrors.email = "Please enter a valid email address.";
+      isValid = false;
+    }
+
+    const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,}$/;
+    if (!passwordRegex.test(form.password)) {
+      newErrors.password = "Password must be at least 8 characters and include a special character and a number.";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setErrors({ ...errors, [e.target.name]: "" });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!validateForm()) return;
     try {
       await registerUser(form);
       navigate("/register-success", { state: { email: form.email } });
@@ -33,10 +72,10 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className=" font-fredoka w-full max-w-md rounded-lg">
-      <img src="/assets/clouds.png" className="absolute top-[78px] left-[220px] w-30" />
-      <img src="/assets/sun.png" className="absolute top-20 left-10 w-48" />
-      <img src="/assets/smallCloud.png" className="absolute top-[250px] right-[150px] w-30" />
-      <img src="/assets/bigCloud.png" className="absolute top-[78px] right-[300px] w-30" />
+      <img src="/assets/clouds.png" className="absolute top-[78px] left-[220px] w-48 hidden lg:block" />
+      <img src="/assets/sun.png" className="absolute top-20 left-10 w-32 hidden lg:block" />
+      <img src="/assets/smallCloud.png" className="absolute top-[250px] right-[150px] w-16 hidden lg:block" />
+      <img src="/assets/bigCloud.png" className="absolute top-[78px] right-[300px] w-28 hidden lg:block" />
         <h2 className="text-white text-7xl mb-4 mt-2 text-center" style={{ WebkitTextStroke: '1px black' }}>Register</h2>
         <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
           {(["firstName", "lastName", "email"] as const).map((field) => (
@@ -53,6 +92,9 @@ const RegisterPage = () => {
                 onChange={handleChange}
                 className="w-full p-4 rounded-lg border border-black text-black placeholder-gray-400"
               />
+              {errors[field] && (
+                <p className="text-red-600 text-sm mt-1 text-center">{errors[field]}</p>
+              )}
             </div>
           ))}
 
@@ -75,6 +117,9 @@ const RegisterPage = () => {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-red-600 text-sm mt-1 text-center">{errors.password}</p>
+            )}
           </div>
 
           <div className="flex flex-row justify-between">

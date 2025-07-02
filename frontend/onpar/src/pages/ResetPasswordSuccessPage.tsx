@@ -3,7 +3,7 @@ const ResetPasswordSuccessPage = () => {
   const navigate = useNavigate();
   return (
     <div className="min-h-screen">
-      <div className="font-fredoka p-8 rounded-lg flex flex-col items-center justify-center max-w-3xl mx-auto">
+      <div className="font-fredoka p-8 rounded-lg flex flex-col items-center justify-center max-w-4xl mx-auto">
         <h1
           className="text-white text-8xl mb-4"
           style={{ WebkitTextStroke: "1px black" }}
@@ -17,7 +17,7 @@ const ResetPasswordSuccessPage = () => {
           Password Reset Successfully!
         </h2>
         <p className="text-white text-4xl mb-10" style={{ WebkitTextStroke: "1px black" }}>
-          You may now login!
+          You may now close the other tab and login!
         </p>
         <button
             className="p-4 text-2xl rounded-lg border-4 border-onparOrange bg-onparLightYellow hover:bg-onparOrange text-black font-bold transition"
