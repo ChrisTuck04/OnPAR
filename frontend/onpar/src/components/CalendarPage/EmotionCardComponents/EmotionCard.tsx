@@ -1,7 +1,6 @@
 import EmotionButton from "./EmotionButton"
 
 interface Props{
-    CardVisibility: (e: React.MouseEvent<HTMLButtonElement>) => void
     Happy: (e: React.MouseEvent<HTMLButtonElement>) => void
     Pleasant: (e: React.MouseEvent<HTMLButtonElement>) => void
     Sad: (e: React.MouseEvent<HTMLButtonElement>) => void

@@ -6,6 +6,8 @@ import HappyTheme from '../components/CalendarPage/HappyComponents/HappyTheme.ts
 import SadTheme from '../components/CalendarPage/SadComponents/SadTheme.tsx';
 import PleasantTheme from '../components/CalendarPage/PleasantComponents/PleasantTheme.tsx';
 import AngryTheme from '../components/CalendarPage/AngryComponents/AngryTheme.tsx';
+import DropdownMenu from '../components/CalendarPage/DropdownMenuComponents/DropdownMenu.tsx';
+import DropdownButton from '../components/CalendarPage/DropdownMenuComponents/DropdownButton.tsx';
 import { useState } from 'react';
 
 
@@ -18,17 +20,17 @@ const CalendarPage = () => {
   const [sadTheme, setSadTheme] = useState(false);
   const [pleasantTheme, setPleasantTheme] = useState(true);
   const [angryTheme, setAngryTheme] = useState(false);
-
-  const CloseCard = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setEmotionCard(false)
-    e.stopPropagation()
-  }
+  const [dropdownMenu, setDropdownMenu] = useState(false)
+  const [menuButton, setMenuButton] = useState(false)
 
   const CardVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
     if(emotionCard === true)
       setEmotionCard(false)
     else if(emotionCard == false)
+    {
       setEmotionCard(true)
+      setDropdownMenu(false)
+    }
     setCalendar(false)
     e.stopPropagation()
   }
@@ -37,7 +39,22 @@ const CalendarPage = () => {
     if(calendar === true)
       setCalendar(false)
     else if(calendar === false && emotionCard === false)
+    {
       setCalendar(true)
+      setDropdownMenu(false)
+    }
+    e.stopPropagation()
+  }
+
+  const OpenDropdownMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setDropdownMenu(true)
+    setMenuButton(false)
+    e.stopPropagation()
+  }
+
+  const CloseDropdownMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setDropdownMenu(false)
+    setMenuButton(true)
     e.stopPropagation()
   }
 
@@ -46,6 +63,8 @@ const CalendarPage = () => {
       setAngryTheme(false)
       setPleasantTheme(false)
       setSadTheme(false)
+      setEmotionCard(false)
+      setMenuButton(true)
       e.stopPropagation()
   }
 
@@ -54,6 +73,8 @@ const CalendarPage = () => {
       setAngryTheme(false)
       setPleasantTheme(false)
       setSadTheme(true)
+      setEmotionCard(false)
+      setMenuButton(true)
       e.stopPropagation()
   }
 
@@ -62,6 +83,8 @@ const CalendarPage = () => {
       setAngryTheme(false)
       setPleasantTheme(true)
       setSadTheme(false)
+      setEmotionCard(false)
+      setMenuButton(true)
       e.stopPropagation()
   }
 
@@ -70,12 +93,14 @@ const CalendarPage = () => {
       setAngryTheme(true)
       setPleasantTheme(false)
       setSadTheme(false)
+      setEmotionCard(false)
+      setMenuButton(true)
       e.stopPropagation()
   }
 
   return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="fixed snap-center z-40">
+        <div className="fixed snap-center z-30">
           {calendar && <WholeCalendar/>}
         </div>
 
@@ -87,20 +112,18 @@ const CalendarPage = () => {
           {isLoggedIn && <LogoutButton />}
         </div>
 
-        <div className="fixed snap-center z-50">
-          {emotionCard && <EmotionCard CardVisibility={CloseCard} Happy={Happy} Pleasant={Pleasant} Sad={Sad} Angry={Angry}/>}
+        <div className="fixed snap-center z-40">
+          {emotionCard && <EmotionCard Happy={Happy} Pleasant={Pleasant} Sad={Sad} Angry={Angry}/>}
         </div>
 
-        <div className="absolute top-4 right-4 font-fredoka z-20" style={{WebkitTextStroke: "1px #FFAA00"}}>
-          <button className="w-[193px] h-[52px] hover:bg-onparOrange border-[3px] border-onparOrange bg-onparLightYellow rounded-2xl p-5 text-l" onClick={CardVisibility}>
-            <span className="relative bottom-[6px]">Emotions</span>
-          </button>
-        </div>
-
-        <div className="absolute top-20 right-4 font-fredoka z-20" style={{WebkitTextStroke: "1px #FFAA00"}}>
-          <button className="w-[193px] h-[52px] hover:bg-onparOrange border-[3px] border-onparOrange bg-onparLightYellow rounded-2xl p-5 text-l" onClick={CalendarVisibility}>
-            <span className="relative bottom-[6px]">Calendar</span>
-          </button>
+        <div>
+          {menuButton && <DropdownButton OpenDropdownMenu={OpenDropdownMenu}/>}
+          {dropdownMenu && <DropdownMenu 
+          CardVisibility={CardVisibility} 
+          CalendarVisibility={CalendarVisibility} 
+          ReflectionVisibility={()=> null} 
+          FriendsListVisibility={()=> null}
+          CloseDropdownMenu={CloseDropdownMenu}/>}
         </div>
 
         {happyTheme && <HappyTheme/>}
