@@ -1,3 +1,5 @@
+import LogoutButton from "../../Logout"
+
 
 interface Props {
     CardVisibility: (e: React.MouseEvent<HTMLButtonElement>) => void
@@ -9,6 +11,9 @@ interface Props {
 }
 
 const DropdownMenu = ({CardVisibility, CalendarVisibility, ReflectionVisibility, FriendsListVisibility, CloseDropdownMenu} : Props) => {
+  //const isLoggedIn = !!localStorage.getItem("token")
+  //{isLoggedIn && <LogoutButton/>}
+
   return (
     <div className="absolute flex flex-col gap-y-4 items-center w-[220px] h-[670px] right-[4px] top-[4px] rounded-3xl bg-gray-500 border-[4px] border-gray-600 z-50">
             <div className="font-fredoka z-20 pt-4" style={{WebkitTextStroke: "1px #FFAA00"}}>
@@ -36,9 +41,7 @@ const DropdownMenu = ({CardVisibility, CalendarVisibility, ReflectionVisibility,
             </div>
 
             <div className="font-fredoka z-20" style={{WebkitTextStroke: "1px #FFAA00"}}>
-                <button className="w-[193px] h-[52px] hover:bg-onparOrange border-[3px] border-onparOrange bg-onparLightYellow rounded-2xl p-5 text-l">
-                    <span className="relative bottom-[6px]">Logout</span>
-                </button>
+                <LogoutButton/>
             </div>
 
             <div className="font-fredoka z-20" style={{WebkitTextStroke: "1px #FFAA00"}}>

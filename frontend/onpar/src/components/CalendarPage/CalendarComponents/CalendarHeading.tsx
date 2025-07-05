@@ -27,7 +27,7 @@ const CalendarHeading = () => {
             <hr className="absolute w-full border-t-[4px] border-onparOrange top-[110px]"/>
         </div>
 
-         <div className="relative grid grid-cols-7 text-center font-fredoka text-lg text-black top-[12px] " style={{WebkitTextStroke:"1px #FFAA00"}}>
+         <div className="relative grid grid-cols-7 text-center font-fredoka text-lg text-black top-[6px] " style={{WebkitTextStroke:"1px #FFAA00"}}>
         {daysOfWeek.map((day, index) => (
           <div key={index} className="border-[2px] border-onparOrange py-2 px-[40px]">
             {day}

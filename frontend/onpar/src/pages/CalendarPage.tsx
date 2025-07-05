@@ -1,6 +1,6 @@
-import LogoutButton from '../components/Logout.tsx';
+
 import GolfBackground from "../components/General/GolfBackground"
-import WholeCalendar from "../components/CalendarPage/CalendarComponents/WholeCalendar.tsx"
+import CalendarContainer from "../components/CalendarPage/CalendarComponents/CalendarContainer.tsx";
 import EmotionCard from "../components/CalendarPage/EmotionCardComponents/EmotionCard.tsx"
 import HappyTheme from '../components/CalendarPage/HappyComponents/HappyTheme.tsx';
 import SadTheme from '../components/CalendarPage/SadComponents/SadTheme.tsx';
@@ -12,8 +12,6 @@ import { useState } from 'react';
 
 
 const CalendarPage = () => {
-  const isLoggedIn = !!localStorage.getItem("token")
-
   const [emotionCard, setEmotionCard] = useState(true)
   const [calendar, setCalendar] = useState(false)
   const [happyTheme, setHappyTheme] = useState(false);
@@ -37,7 +35,10 @@ const CalendarPage = () => {
 
   const CalendarVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
     if(calendar === true)
+    {
       setCalendar(false)
+      setMenuButton(true)
+    }
     else if(calendar === false && emotionCard === false)
     {
       setCalendar(true)
@@ -101,15 +102,11 @@ const CalendarPage = () => {
   return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="fixed snap-center z-30">
-          {calendar && <WholeCalendar/>}
+          {calendar && <CalendarContainer ExitCalendar={CalendarVisibility}/>}
         </div>
 
         <div className="fixed bottom-0 w-screen z-[5]">
           <GolfBackground/>
-        </div>
-
-        <div className="absolute top-4 right-4">
-          {isLoggedIn && <LogoutButton />}
         </div>
 
         <div className="fixed snap-center z-40">
@@ -126,10 +123,13 @@ const CalendarPage = () => {
           CloseDropdownMenu={CloseDropdownMenu}/>}
         </div>
 
-        {happyTheme && <HappyTheme/>}
-        {sadTheme && <SadTheme/>}
-        {pleasantTheme && <PleasantTheme/>}
-        {angryTheme && <AngryTheme/>}
+        <div>
+          {happyTheme && <HappyTheme/>}
+          {sadTheme && <SadTheme/>}
+          {pleasantTheme && <PleasantTheme/>}
+          {angryTheme && <AngryTheme/>}
+        </div>
+  
       </div>
   )
 }
