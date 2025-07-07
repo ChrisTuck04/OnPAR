@@ -1,13 +1,17 @@
-
+import ViewSelection from "./ViewSelection"
 interface Props {
 	ExitCalendar : (e: React.MouseEvent<HTMLButtonElement>) => void
+	DayView : (e: React.MouseEvent<HTMLButtonElement>) => void
+	WeekView : (e: React.MouseEvent<HTMLButtonElement>) => void
+	MonthView : (e: React.MouseEvent<HTMLButtonElement>) => void 
+	currentView : string
 }
 
-const CalendarMenu = ({ExitCalendar} : Props) => {
+const CalendarMenu = ({ExitCalendar, DayView, WeekView, MonthView, currentView} : Props) => {
   return (
     <div className="h-full flex flex-col items-center w-[300px] bg-[#F9F3EF] border-[4px] border-[#D2C1B6] gap-4">
       <div className="flex w-full h-[100px] border-b-[4px] border-[#D2C1B6] overflow-hidden items-center justify-center">
-        Month View
+        <ViewSelection currentView={currentView} DayView={DayView} WeekView={WeekView} MonthView={MonthView}/>
       </div>
 
 			<button className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl">
