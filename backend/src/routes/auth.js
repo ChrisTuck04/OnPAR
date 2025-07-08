@@ -317,7 +317,7 @@ router.post("/create-event", authenticateToken, async (req, res) => {
 // Update Event API
 router.post("/update-event", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { title, content, startTime, endTime, recurring, color, eventId} = req.body;
+  const { title, content, startTime, endTime, recurring, color, eventId, recurDays, recurEnd} = req.body;
 
   try
   {
