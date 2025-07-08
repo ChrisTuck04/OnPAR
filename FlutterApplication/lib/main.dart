@@ -5,6 +5,8 @@ import 'dart:convert';
 
 import 'package:intl/intl.dart';
 
+const List<String> emotions = ['Neutral', 'Happy', 'Angry', 'Sad'];
+
 Future main() async {
   await dotenv.load(fileName: ".env");
   runApp(const MyApp());
@@ -546,7 +548,7 @@ Widget buildCalendar(DateTime month) {
         return Container(
           decoration: const BoxDecoration(
             border: Border(
-              top: BorderSide.none,
+              top: BorderSide(width: 1.0, color: Colors.grey),
               left: BorderSide(width: 1.0, color: Colors.grey),
               right: BorderSide(width: 1.0, color: Colors.grey),
               bottom: BorderSide(width: 1.0, color: Colors.grey),
@@ -565,13 +567,19 @@ Widget buildCalendar(DateTime month) {
 
         return InkWell(
           onTap: () {
-            // Handle tap on a date cell
-            // This is where you can add functionality when a date is tapped
+            if (mounted) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EventPage(),
+                ),
+              );
+            }
           },
           child: Container(
             decoration: const BoxDecoration(
               border: Border(
-                top: BorderSide.none,
+                top: BorderSide(width: 1.0, color: Colors.grey),
                 left: BorderSide(width: 1.0, color: Colors.grey),
                 right: BorderSide(width: 1.0, color: Colors.grey),
                 bottom: BorderSide(width: 1.0, color: Colors.grey),
@@ -630,6 +638,57 @@ Widget buildCalendar(DateTime month) {
   void dispose() {
     super.dispose();
   }
+}
+
+class EventPage extends StatefulWidget {
+  const EventPage({super.key});
+
+  @override
+  State<EventPage> createState() => _EventPageState();
+}
+
+class _EventPageState extends State<EventPage> {
+  String dropdownValue = emotions.first;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Plan Ahead and Reflect'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Row(
+        children: [
+          Column(
+            children: [
+              IconButton(
+                icon: Icon(Icons.arrow_back),
+                  onPressed: () {
+                    Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              DropdownButton<String>(
+                value: dropdownValue, 
+                onChanged: (String? value) {
+                  setState(() {
+                    dropdownValue = value!;
+                  });
+                },
+                items: emotions.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(value: value, child: Text(value));
+                }).toList(),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
 }
 
 extension DateOnlyCompare on DateTime {
