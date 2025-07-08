@@ -8,7 +8,9 @@ const eventSchema = new mongoose.Schema({
   recurring: { type: Boolean },
   userId: { type: mongoose.Schema.Types.ObjectId },
   sharedEmails: { type: [String] },
-  color: { type: Number }
+  color: { type: Number },
+  recurDays: {type: [Number]},
+  recurEnd: {type: Date}
 });
 
 const Event = mongoose.model("Event", eventSchema);
