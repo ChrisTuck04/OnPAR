@@ -7,7 +7,7 @@ const router = express.Router();
 // Create Event API
 router.post("/create-event", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { title, content, startTime, endTime, recurring, color } = req.body;
+  const { title, content, startTime, endTime, recurring, color, recurDays, recurEnd } = req.body;
 
   try {
     const newEvent = new Events({
@@ -17,12 +17,14 @@ router.post("/create-event", authenticateToken, async (req, res) => {
       endTime,
       recurring,
       userId: userId,
-      color
+      color,
+      recurDays,
+      recurEnd
     });
 
     await newEvent.save();
 
-      res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, recurring, userId: userId, color} });
+      res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, recurring, userId: userId, color, recurDays, recurEnd} });
   } catch (error) {
       console.error("Error creating event:", error);
       res.status(500).json({ error: "Failed to create event." });
@@ -32,7 +34,7 @@ router.post("/create-event", authenticateToken, async (req, res) => {
 // Update Event API
 router.post("/update-event", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { title, content, startTime, endTime, recurring, color, eventId} = req.body;
+  const { title, content, startTime, endTime, recurring, color, eventId, recurDays, recurEnd} = req.body;
 
   try
   {
@@ -69,6 +71,14 @@ router.post("/update-event", authenticateToken, async (req, res) => {
     if(color !== undefined)
     {
       event.color = color;
+    }
+    if(recurDays !== undefined)
+    {
+      event.recurDays = recurDays;
+    }
+    if(recurEnd !== undefined)
+    {
+      event.recurEnd = recurEnd;
     }
 
     await event.save();
