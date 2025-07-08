@@ -4,7 +4,7 @@ import CalendarGrid from "./CalendarGrid"
 
 const WholeCalendar = () => {
   return (
-    <div className="flex-auto h-full bg-onparLightYellow border-onparOrange border-[5px] rounded-[40px]">
+    <div className="flex-auto h-full bg-onparLightYellow border-onparOrange border-[5px] rounded-[40px] overflow-hidden">
       <CalendarHeading/>
       <CalendarGrid/>
     </div>

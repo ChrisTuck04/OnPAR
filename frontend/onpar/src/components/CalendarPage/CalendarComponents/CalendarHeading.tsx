@@ -2,6 +2,7 @@
 const CalendarHeading = () => {
 
   const daysOfWeek = ['S','M','T','W','T','F','S']
+  const months= ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
   const left = "<<"
   const right = ">>"
@@ -9,17 +10,17 @@ const CalendarHeading = () => {
   return (
     <div>
         <div className="relative grid grid-cols-3 text-center font-fredoka text-black top-[8px]" style={{WebkitTextStroke:"1px #FFAA00"}}>
-            <div className="text-[25px] py-2 ">
+            <button className="text-[25px] py-2">
               {left}
-            </div>
+            </button>
 
             <div className="text-[35px]">
-              June
+              {months[6]}
             </div>
 
-            <div className="text-[25px] py-2"> 
+            <button className="text-[25px] py-2">
               {right}
-            </div>
+            </button>
         </div>
 
         <div>

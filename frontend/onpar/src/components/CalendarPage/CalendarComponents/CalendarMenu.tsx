@@ -9,8 +9,10 @@ interface Props {
 
 const CalendarMenu = ({ExitCalendar, DayView, WeekView, MonthView, currentView} : Props) => {
   return (
-    <div className="h-full flex flex-col items-center w-[300px] bg-[#F9F3EF] border-[4px] border-[#D2C1B6] gap-4">
-      <div className="flex w-full h-[100px] border-b-[4px] border-[#D2C1B6] overflow-hidden items-center justify-center">
+    <div
+		className="h-full flex flex-col items-center w-[300px] bg-[#F9F3EF] border-[4px] border-[#D2C1B6] gap-4 font-fredoka text-[25px] rounded-tr-3xl rounded-br-3xl"
+		style={{WebkitTextStroke:"1px #D2C1B6"}}>
+      <div className="relative flex w-full h-[100px] border-b-[4px] border-[#D2C1B6] items-center justify-center">
         <ViewSelection currentView={currentView} DayView={DayView} WeekView={WeekView} MonthView={MonthView}/>
       </div>
 
