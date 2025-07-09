@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'event.dart';
 
 const List<String> emotions = ['Neutral', 'Happy', 'Angry', 'Sad'];
+const List<Color> emotionColors = [Colors.blue, Colors.yellow, Colors.red, Colors.purple];
+RegExp passwordRegex = RegExp(r"^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z0-9!@#$%^&*]{8,}$");
 
 Future main() async {
   await dotenv.load(fileName: ".env");
@@ -40,7 +42,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
   bool _isLoading = false;
-  bool _isRegistering = false;
 
   Future<void> _login() async {
     setState(() {
@@ -50,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.env['VITE_API_URL']}/login'),  //API LOGIN CALL HERE
+        Uri.parse('${dotenv.env['VITE_API_URL']}/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _emailController.text,
@@ -92,11 +93,20 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void _openregister() {
+  void _openRegister() {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => RegisterPage(),
+      ),
+    );
+  }
+
+  void _resetPassword() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoginPage(),
       ),
     );
   }
@@ -151,12 +161,23 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _openregister,
+                onPressed: _openRegister,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: const Text(
                         'Register New User',
+                        style: TextStyle(fontSize: 16),
+                      ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _resetPassword,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                        'Forgot Password',
                         style: TextStyle(fontSize: 16),
                       ),
               ),
@@ -198,10 +219,82 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   String _errorMessage = '';
   bool _isLoading = false;
+  
+  Future<void> _register() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    if(_isValidPassword(passwordRegex)) {
+      if(_isConfirmMatch()) {
+        try {
+          final response = await http.post(
+            Uri.parse('${dotenv.env['VITE_API_URL']}/register'),  //API LOGIN CALL HERE
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'firstName': _firstNameController.text,
+              'lastName': _lastNameController.text,
+              'email': _emailController.text,
+              'password': _passwordController.text,
+            }),
+          );
+
+          if (response.statusCode == 201) {
+            final data = jsonDecode(response.body);
+            
+            if (data['error'] == null || data['error'].isEmpty) {
+              // Register successful, navigate to login page
+              _errorMessage = 'Registration Successful. Check email for Confirmation.';
+              await Future.delayed(const Duration(seconds: 2));
+              _errorMessage = '';
+            } else {
+              setState(() {
+                _errorMessage = 'Error Registering this account';
+              });
+            }
+          } else {
+            setState(() {
+              _errorMessage = 'Register failed. Please try again.';
+            });
+          }
+        } catch (e) {
+          setState(() {
+            _errorMessage = 'Network error. Please check your connection.';
+          });
+        } finally {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+      else {
+        setState(() {
+          _errorMessage = 'Passwords must match.';
+          _isLoading = false;
+        });
+      }
+    }
+    else {
+      setState(() {
+        _errorMessage = 'Password must be at least 8 characters and include a special character and a number.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  bool _isValidPassword(RegExp passwordRegex) {
+    return passwordRegex.hasMatch(_passwordController.text);
+  }
+
+  bool _isConfirmMatch() {
+    return _confirmController.text == _passwordController.text;
+  }
 
   void _redirectLogin() {
     if (mounted) {
@@ -211,61 +304,6 @@ class _RegisterPageState extends State<RegisterPage> {
           builder: (context) => LoginPage(),
         ),
       );
-    }
-  }
-  
-  Future<void> _register() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
-    try {
-      final response = await http.post(
-        Uri.parse('${dotenv.env['VITE_API_URL']}/register'),  //API LOGIN CALL HERE
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'firstName': _firstNameController.text,
-          'lastName': _lastNameController.text,
-          'email': _emailController.text,
-          'password': _passwordController.text,
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        
-        if (data['error'] == null || data['error'].isEmpty) {
-          // Register successful, navigate to login page
-          _errorMessage = 'Registration Success. Redirecting to Login';
-          await Future.delayed(const Duration(seconds: 2));
-          _errorMessage = '';
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => LoginPage(),
-            ),
-      );
-          }
-        } else {
-          setState(() {
-            _errorMessage = 'Error Registering this account';
-          });
-        }
-      } else {
-        setState(() {
-          _errorMessage = 'Register failed. Please try again.';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Network error. Please check your connection.';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -317,6 +355,15 @@ class _RegisterPageState extends State<RegisterPage> {
                 obscureText: true,
                 decoration: const InputDecoration(
                   labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _confirmController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Password',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -375,326 +422,123 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  final PageController _pageController = PageController(initialPage: DateTime.now().month - 1);
+  
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  Map<DateTime, List<Event>> events = {};
+  Map<DateTime, String> emotionOnDay = {};
+  TextEditingController _eventNameController = TextEditingController();
+  TextEditingController _eventContentController = TextEditingController();
 
-  DateTime _currentDate = DateTime.now();
-  bool selectedcurrentyear = false;
+  //EventLoader for repeating events
 
   @override
   void initState() {
     super.initState();
+    _selectedDay = _focusedDay;
+    //Get events list from db
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Welcome'),
-        automaticallyImplyLeading: false,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(),
-            _buildWeeks(),
-            Expanded(
-              child: PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentDate = DateTime(_currentDate.year, index + 1, 1);
-              
-                });
-              },
-              itemCount: 12 * 10, // Show 10 years, adjust this count as needed
-              itemBuilder: (context, pageIndex) {
-                DateTime month =
-                    DateTime(_currentDate.year, (pageIndex % 12) + 1, 1);
-                return buildCalendar(month);
-              },
-            ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-  // Checks if the current month is the last month of the year for calendar page selection
-  bool isLastMonthOfYear = _currentDate.month == 12;
-
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            // Moves to the previous page if the current page index is greater than 0
-            if (_pageController.page! > 0) {
-              _pageController.previousPage(
-                duration: Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-              );
-            }
-          },
-        ),
-        // Displays the name of the current month
-        Text(
-          DateFormat('MMMM').format(_currentDate),
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        DropdownButton<int>(
-          // Dropdown for selecting a year
-          value: _currentDate.year,
-          onChanged: (int? year) {
-            if (year != null) {
-              setState(() {
-                // Gets current month before switching years
-                int monthIndex = _currentDate.month - 1;
-                // Sets the current date to the selected year
-                _currentDate = DateTime(year, _currentDate.month, _currentDate.day);
-
-                _pageController.jumpToPage(monthIndex);
-              });
-            }
-          },
-          items: [
-            // Generates DropdownMenuItems for a range of years from 5 years ago to 5 years from now
-            for (int year = DateTime.now().year - 5;
-                year <= DateTime.now().year + 5;
-                year++)
-              DropdownMenuItem<int>(
-                value: year,
-                child: Text(year.toString()),
-              ),
-          ],
-        ),
-        IconButton(
-          icon: Icon(Icons.arrow_forward),
-          onPressed: () {
-            // Moves to the next page if it's not the last month of the year
-            if (!isLastMonthOfYear) {
-              setState(() {
-                _pageController.nextPage(
-                  duration: Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                );
-              });
-            }
-          },
-        ),
-      ],
-    ),
-  );
-}
-
-  Widget _buildWeeks() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildWeekDay('Mon'),
-          _buildWeekDay('Tue'),
-          _buildWeekDay('Wed'),
-          _buildWeekDay('Thu'),
-          _buildWeekDay('Fri'),
-          _buildWeekDay('Sat'),
-          _buildWeekDay('Sun'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWeekDay(String day) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8.0),
-      child: Text(
-        day,
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-// This widget builds the detailed calendar grid for the chosen month.
-Widget buildCalendar(DateTime month) {
-  // Calculating various details for the month's display
-  int daysInMonth = DateTime(month.year, month.month + 1, 0).day;
-  DateTime firstDayOfMonth = DateTime(month.year, month.month, 1);
-  int weekdayOfFirstDay = firstDayOfMonth.weekday;
-
-  DateTime lastDayOfPreviousMonth =
-      firstDayOfMonth.subtract(Duration(days: 1));
-  int daysInPreviousMonth = lastDayOfPreviousMonth.day;
-
-  return GridView.builder(
-    padding: EdgeInsets.zero,
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 7,
-      childAspectRatio: 0.4,
-    ),
-    // Calculating the total number of cells required in the grid
-    itemCount: daysInMonth + weekdayOfFirstDay - 1,
-    itemBuilder: (context, index) {
-      if (index < weekdayOfFirstDay - 1) {
-        // Displaying dates from the previous month in grey
-        int previousMonthDay =
-            daysInPreviousMonth - (weekdayOfFirstDay - index) + 2;
-        return Container(
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(width: 1.0, color: Colors.grey),
-              left: BorderSide(width: 1.0, color: Colors.grey),
-              right: BorderSide(width: 1.0, color: Colors.grey),
-              bottom: BorderSide(width: 1.0, color: Colors.grey),
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            previousMonthDay.toString(),
-            style: TextStyle(color: Colors.grey),
-          ),
-        );
-      } else {
-        // Displaying the current month's days
-        DateTime date = DateTime(month.year, month.month, index - weekdayOfFirstDay + 2);
-        String text = date.day.toString();
-
-        return InkWell(
-          onTap: () {
-            if (mounted) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EventPage(),
-                ),
-              );
-            }
-          },
-          child: Container(
-            decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(width: 1.0, color: Colors.grey),
-                left: BorderSide(width: 1.0, color: Colors.grey),
-                right: BorderSide(width: 1.0, color: Colors.grey),
-                bottom: BorderSide(width: 1.0, color: Colors.grey),
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Center(
-                    child: Text(
-                      text,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 0,
-                  child: SizedBox(
-                    child: Image.network(
-                      '', // Image
-                      width: 40,
-                      height: 40,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 3.0, right: 3.0),
-                    child: Text(
-                      'Placeholder', // Sample text
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 10.0,
-                        fontWeight: FontWeight.w400,
-                        color: Color.fromARGB(255, 127, 126, 126),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
-    },
-  );
-}
 
   @override
   void dispose() {
     super.dispose();
   }
-}
 
-class EventPage extends StatefulWidget {
-  const EventPage({super.key});
+  List<Event> _getEventsForDay(DateTime day) {
+    return events[day] ?? [];
+  }
 
-  @override
-  State<EventPage> createState() => _EventPageState();
-}
-
-class _EventPageState extends State<EventPage> {
-  String dropdownValue = emotions.first;
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+      if(!isSameDay(_selectedDay, selectedDay)) {
+        setState(() {
+          _selectedDay = selectedDay;
+          _focusedDay = _focusedDay;
+          //_selectedEvents = _getEventsForDay(selectedDay);
+        });
+      }
+  }
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Plan Ahead and Reflect'),
-        automaticallyImplyLeading: false,
-      ),
-      body: Row(
-        children: [
-          Column(
-            children: [
-              IconButton(
-                icon: Icon(Icons.arrow_back),
-                  onPressed: () {
-                    Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-          Column(
-            children: [
-              DropdownButton<String>(
-                value: dropdownValue, 
-                onChanged: (String? value) {
-                  setState(() {
-                    dropdownValue = value!;
-                  });
-                },
-                items: emotions.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(value: value, child: Text(value));
-                }).toList(),
-              ),
-            ],
-          )
-        ],
-      ),
+      appBar: AppBar(title: Text("Calendar")),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () { 
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                scrollable: true,
+                title: Text("Add Event"),
+                content: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _eventNameController,
+                        decoration: InputDecoration(
+                          hintText: 'Event Name',
+                        ),
+                      ),
+                      TextField(
+                        controller: _eventContentController,
+                        decoration: InputDecoration(
+                          hintText: 'Event Description',
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                actions: [
+                  ElevatedButton(
+                    onPressed: () {
+                      //Push event to db
+                      events.addAll({
+                        _selectedDay!: [Event(_eventNameController.text, "", DateTime.now(), DateTime.now())]
+                      });
+                      Navigator.of(context).pop();
+                    }, 
+                    child: Text("Submit Event"),
+                  )
+                ],
+              );
+            },
+          );
+        },
+        child: Icon(Icons.add),),
+      body: content(),
     );
   }
 
-}
-
-extension DateOnlyCompare on DateTime {
-  bool isSameDate(DateTime other) {
-    return year == other.year &&
-        month == other.month &&
-        day == other.day;
+  Widget content() {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        children: [
+          TableCalendar(
+            rowHeight: 50,
+            headerStyle: HeaderStyle(
+              formatButtonVisible: false,
+              titleCentered: true,),
+            focusedDay: _focusedDay, 
+            firstDay: DateTime.utc(DateTime.now().year - 8, 01, 01), 
+            lastDay: DateTime.utc(DateTime.now().year + 8, 12, 12),
+            calendarFormat: CalendarFormat.month,
+            startingDayOfWeek: StartingDayOfWeek.sunday,
+            onDaySelected: _onDaySelected,
+            selectedDayPredicate: (day)=>isSameDay(_selectedDay, day),
+            calendarStyle: CalendarStyle(
+              outsideDaysVisible: false,
+            ),
+            onPageChanged: (focusedDay) {
+              _focusedDay = focusedDay;
+            },
+          ),
+          SizedBox(height: 8)
+        ],
+      )
+    );
   }
+  
 }
+  
