@@ -251,8 +251,6 @@ class _RegisterPageState extends State<RegisterPage> {
             if (data['error'] == null || data['error'].isEmpty) {
               // Register successful, navigate to login page
               _errorMessage = 'Registration Successful. Check email for Confirmation.';
-              await Future.delayed(const Duration(seconds: 2));
-              _errorMessage = '';
             } else {
               setState(() {
                 _errorMessage = 'Error Registering this account';
@@ -469,7 +467,7 @@ class _CalendarPageState extends State<CalendarPage> {
             builder: (context) {
               return AlertDialog(
                 scrollable: true,
-                title: Text("Add Event"),
+                title: Text("Add Event for " + _selectedDay.toString()),
                 content: Padding(
                   padding: EdgeInsets.all(8),
                   child: Column(
