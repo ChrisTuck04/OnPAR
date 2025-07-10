@@ -20,14 +20,6 @@ const CalendarMenu = ({ExitCalendar, DayView, WeekView, MonthView, currentView} 
 				Create Event
 			</button>
 
-      <button className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl">
-				Peronal Calendars
-			</button>
-
-			<button className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl">
-				Friend Calendars
-			</button>
-
 			<button className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl">
 				Share a Calendar
 			</button>
