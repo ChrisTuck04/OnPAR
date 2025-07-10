@@ -8,8 +8,11 @@ import PleasantTheme from '../components/CalendarPage/PleasantComponents/Pleasan
 import AngryTheme from '../components/CalendarPage/AngryComponents/AngryTheme.tsx';
 import DropdownMenu from '../components/CalendarPage/DropdownMenuComponents/DropdownMenu.tsx';
 import DropdownButton from '../components/CalendarPage/DropdownMenuComponents/DropdownButton.tsx';
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
+import dayjs from "dayjs";
+import type { User } from "../types/User"
+import type { Emotions } from "../types/Emotions.ts";
+import type { Events } from "../types/Events.ts"
 
 const CalendarPage = () => {
   const [emotionCard, setEmotionCard] = useState(true)
@@ -20,6 +23,19 @@ const CalendarPage = () => {
   const [angryTheme, setAngryTheme] = useState(false);
   const [dropdownMenu, setDropdownMenu] = useState(false)
   const [menuButton, setMenuButton] = useState(false)
+
+  /*these are the useStates for user object, all
+   emotions of the user per day they logged it,
+   and events list that holds all the events the
+   user made. Will need to parse the events list
+   even further when adding events to the */
+  const [emotions, setEmotions] = useState<Emotions[]>([])
+  const [events, setEvents] = useState<Events[]>([])
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+  
+  }, [])
 
   const CardVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
     if(emotionCard === true)
@@ -101,6 +117,10 @@ const CalendarPage = () => {
 
   return (
       <div className="min-h-screen flex items-center justify-center">
+
+        <DateTimeHeader/> 
+        <WelcomeHeader name="Andres"/>
+
         <div className="fixed snap-center z-30">
           {calendar && <CalendarContainer ExitCalendar={CalendarVisibility}/>}
         </div>
@@ -128,9 +148,43 @@ const CalendarPage = () => {
           {sadTheme && <SadTheme/>}
           {pleasantTheme && <PleasantTheme/>}
           {angryTheme && <AngryTheme/>}
-        </div>
-  
+        </div>  
       </div>
+  )
+}
+
+const DateTimeHeader = () => {
+
+  const [currTime, setCurrTime] = useState(dayjs())
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrTime(dayjs())
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="fixed w-full h-full flex flex-col items-center top-[200px] text-[60px] font-fredoka text-white z-[25]"
+          style={{WebkitTextStroke: "1px #D2C1B6"}}>
+      <p className="flex justify-center items-center w-[800px] h-[100px]">Today is {currTime.format("dddd")}</p>
+      <p className="flex justify-center items-center w-[800px] h-[100px]">{currTime.format("MMMM D, YYYY")}</p>
+      <p className="flex justify-center items-center w-[600px] h-[100px]">{currTime.format("hh:mm A")}</p>
+    </div>
+  )
+}
+
+interface Props {
+  name: string
+}
+
+const WelcomeHeader = ({name} : Props) => {
+  return (
+    <div className="fixed flex flex-col items-center w-full h-full top-[100px] text-white font-fredoka text-[65px] z-[25]"
+          style={{WebkitTextStroke: "1px #D2C1B6"}}>
+      <p className="flex items-center justify-center w-[800px] h-[100px]">Welcome {name}</p>
+    </div>
   )
 }
 
