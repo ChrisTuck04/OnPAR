@@ -285,4 +285,25 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
+//Read User (For Names)
+router.post("/read-user", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try
+  {
+    const user = await User.findOne({
+      _id: userId
+    });
+
+    res.status(200).json({ message: "User retrieved successfully", firstName: user.firstName, lastName: user.lastName });
+
+    
+  }
+  catch(error)
+  {
+    console.error("Read user error:", error);
+    res.status(500).json({ error: "Failed to retrieve user." });
+  }
+})
+
 module.exports = { router, authenticateToken };
