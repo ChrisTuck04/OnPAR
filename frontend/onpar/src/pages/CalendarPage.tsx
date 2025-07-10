@@ -10,6 +10,9 @@ import DropdownMenu from '../components/CalendarPage/DropdownMenuComponents/Drop
 import DropdownButton from '../components/CalendarPage/DropdownMenuComponents/DropdownButton.tsx';
 import { useState, useEffect } from 'react';
 import dayjs from "dayjs";
+import type { User } from "../types/User"
+import type { Emotions } from "../types/Emotions.ts";
+import type { Events } from "../types/Events.ts"
 
 const CalendarPage = () => {
   const [emotionCard, setEmotionCard] = useState(true)
@@ -20,6 +23,19 @@ const CalendarPage = () => {
   const [angryTheme, setAngryTheme] = useState(false);
   const [dropdownMenu, setDropdownMenu] = useState(false)
   const [menuButton, setMenuButton] = useState(false)
+
+  /*these are the useStates for user object, all
+   emotions of the user per day they logged it,
+   and events list that holds all the events the
+   user made. Will need to parse the events list
+   even further when adding events to the */
+  const [emotions, setEmotions] = useState<Emotions[]>([])
+  const [events, setEvents] = useState<Events[]>([])
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+  
+  }, [])
 
   const CardVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
     if(emotionCard === true)
