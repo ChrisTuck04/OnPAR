@@ -37,7 +37,7 @@ jobs:
           git pull origin main
           cd frontend/onpar
           npm install
-          VITE_API_URL=https://onpar.life/api/auth npm run build
+          npm run build
           sudo rm -rf /var/www/mern-frontend/*
           sudo cp -r dist/* /var/www/mern-frontend/
           
