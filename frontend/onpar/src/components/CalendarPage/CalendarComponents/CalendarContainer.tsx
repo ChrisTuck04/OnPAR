@@ -3,6 +3,7 @@ import DayCalendar from "./DayCalendar"
 import WeekCalendar from "./WeekCalendar"
 import CalendarMenu from "./CalendarMenu"
 import { useState } from "react"
+import EventForm from "../../EventsComponents/EventForm"
 
 let View = "Month"
 
@@ -15,6 +16,8 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
   const [monthView, setMonthView] = useState(true)
   const [weekView, setWeekView] = useState(false)
   const [dayView, setDayView] = useState(false)
+  const [eventForm, setEventForm] = useState(false)
+  const [calendarMenu, setCalendarMenu] = useState(true)
 
   const MonthViewValid = (e : React.MouseEvent<HTMLButtonElement>) => {
     setMonthView(true)
@@ -40,16 +43,34 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
     e.stopPropagation()
   }
 
+  const CalendarMenuVisibility = (e : React.MouseEvent<HTMLButtonElement>) => {
+    if(calendarMenu === false) {
+      e.stopPropagation()
+      setCalendarMenu(true)
+      setEventForm(false)
+    } else if(calendarMenu === true) {
+      e.stopPropagation()
+      setEventForm(true)
+      setCalendarMenu(false)
+    }
+  }
 
   return (
     <div className="flex row w-screen h-screen bg-[#F9F3EF]">
-				<CalendarMenu 
-        ExitCalendar={ExitCalendar} 
-        DayView={DayViewValid} 
-        WeekView={WeekViewValid} 
-        MonthView={MonthViewValid}
-        currentView={View}
-        />
+
+        {eventForm && <EventForm
+          addEvent={() => "MAKE FUNCTION"}
+          exitEventForm={CalendarMenuVisibility}/>}
+
+				{calendarMenu && <CalendarMenu 
+          openEventForm={CalendarMenuVisibility}
+          ExitCalendar={ExitCalendar} 
+          DayView={DayViewValid} 
+          WeekView={WeekViewValid} 
+          MonthView={MonthViewValid} 
+          currentView={View}/>
+        }
+
 				{monthView && <WholeCalendar/>}
         {dayView && <DayCalendar/>}
         {weekView && <WeekCalendar/>}

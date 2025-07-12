@@ -13,6 +13,7 @@ const router = express.Router();
 // Email setup
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+
 // Helper function for sending email
 const sendVerificationEmail = async (email, verificationToken) => {
   const verificationLink = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;

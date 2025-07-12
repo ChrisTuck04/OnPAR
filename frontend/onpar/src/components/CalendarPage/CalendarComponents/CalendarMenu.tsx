@@ -1,5 +1,6 @@
 import ViewSelection from "./ViewSelection"
 interface Props {
+	openEventForm: (e: React.MouseEvent<HTMLButtonElement>) => void
 	ExitCalendar : (e: React.MouseEvent<HTMLButtonElement>) => void
 	DayView : (e: React.MouseEvent<HTMLButtonElement>) => void
 	WeekView : (e: React.MouseEvent<HTMLButtonElement>) => void
@@ -7,7 +8,7 @@ interface Props {
 	currentView : string
 }
 
-const CalendarMenu = ({ExitCalendar, DayView, WeekView, MonthView, currentView} : Props) => {
+const CalendarMenu = ({openEventForm, ExitCalendar, DayView, WeekView, MonthView, currentView} : Props) => {
   return (
     <div
 		className="h-full flex flex-col items-center w-[300px] bg-[#F9F3EF] border-[4px] border-[#D2C1B6] gap-4 font-fredoka text-[25px] rounded-tr-3xl rounded-br-3xl"
@@ -16,7 +17,9 @@ const CalendarMenu = ({ExitCalendar, DayView, WeekView, MonthView, currentView} 
         <ViewSelection currentView={currentView} DayView={DayView} WeekView={WeekView} MonthView={MonthView}/>
       </div>
 
-			<button className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl">
+			<button
+			className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl"
+			onClick={openEventForm}>
 				Create Event
 			</button>
 

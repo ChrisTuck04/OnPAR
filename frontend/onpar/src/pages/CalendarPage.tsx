@@ -9,10 +9,16 @@ import AngryTheme from '../components/CalendarPage/AngryComponents/AngryTheme.ts
 import DropdownMenu from '../components/CalendarPage/DropdownMenuComponents/DropdownMenu.tsx';
 import DropdownButton from '../components/CalendarPage/DropdownMenuComponents/DropdownButton.tsx';
 import { useState, useEffect } from 'react';
-import dayjs from "dayjs";
-import type { User } from "../types/User"
+//import dayjs from "dayjs";
+//import type { User } from "../types/User"
 import type { Emotions } from "../types/Emotions.ts";
-import type { Events } from "../types/Events.ts"
+
+//import { createEmotion, readEmotion, updateEmotions,deleteEmotion } from "../api/emotions"
+
+// @ts-expect-error axios functions in js
+import { getUser } from "../api/auth"
+import type { AxiosError } from "axios";
+
 
 const CalendarPage = () => {
   const [emotionCard, setEmotionCard] = useState(true)
@@ -29,13 +35,10 @@ const CalendarPage = () => {
    and events list that holds all the events the
    user made. Will need to parse the events list
    even further when adding events to the */
-  const [emotions, setEmotions] = useState<Emotions[]>([])
-  const [events, setEvents] = useState<Events[]>([])
-  const [user, setUser] = useState<User | null>(null)
 
-  useEffect(() => {
-  
-  }, [])
+  //const [emotions, setEmotions] = useState<Emotions[]>([])
+
+  const [userName, setUserName] = useState("")
 
   const CardVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
     if(emotionCard === true)
@@ -115,11 +118,24 @@ const CalendarPage = () => {
       e.stopPropagation()
   }
 
+  const fetchUserName = async () => {
+    try {
+      const user = await getUser()
+      setUserName(user.firstName)
+    } catch (err : unknown) {
+      const error = err as AxiosError<{error : string}>
+      alert(error.response?.data?.error || "retrieving user first name failed")
+    }
+  }
+
+  useEffect(() => {
+    fetchUserName()
+  }, [])
+
   return (
       <div className="min-h-screen flex items-center justify-center">
 
-        <DateTimeHeader/> 
-        <WelcomeHeader name="Andres"/>
+        <WelcomeHeader name={userName}/>
 
         <div className="fixed snap-center z-30">
           {calendar && <CalendarContainer ExitCalendar={CalendarVisibility}/>}
@@ -153,6 +169,7 @@ const CalendarPage = () => {
   )
 }
 
+/*
 const DateTimeHeader = () => {
 
   const [currTime, setCurrTime] = useState(dayjs())
@@ -174,6 +191,7 @@ const DateTimeHeader = () => {
     </div>
   )
 }
+*/
 
 interface Props {
   name: string
@@ -183,7 +201,7 @@ const WelcomeHeader = ({name} : Props) => {
   return (
     <div className="fixed flex flex-col items-center w-full h-full top-[100px] text-white font-fredoka text-[65px] z-[25]"
           style={{WebkitTextStroke: "1px #D2C1B6"}}>
-      <p className="flex items-center justify-center w-[800px] h-[100px]">Welcome {name}</p>
+      <p className="flex items-center justify-center w-[800px] h-[100px]">Welcome {name}!</p>
     </div>
   )
 }
