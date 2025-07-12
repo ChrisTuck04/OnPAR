@@ -427,6 +427,7 @@ class _CalendarPageState extends State<CalendarPage> {
   Map<DateTime, String> emotionOnDay = {};
   TextEditingController _eventNameController = TextEditingController();
   TextEditingController _eventContentController = TextEditingController();
+  late final ValueNotifier<List<Event>> _selectedEvents;
 
   //EventLoader for repeating events
 
@@ -434,15 +435,18 @@ class _CalendarPageState extends State<CalendarPage> {
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+    _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
     //Get events list from db
   }
 
   @override
   void dispose() {
+    _selectedEvents.dispose();
     super.dispose();
   }
 
   List<Event> _getEventsForDay(DateTime day) {
+    //Either returns all events for a day or an empty list
     return events[day] ?? [];
   }
 
@@ -451,9 +455,10 @@ class _CalendarPageState extends State<CalendarPage> {
         setState(() {
           _selectedDay = selectedDay;
           _focusedDay = _focusedDay;
-          //_selectedEvents = _getEventsForDay(selectedDay);
         });
       }
+
+      _selectedEvents.value = _getEventsForDay(selectedDay);
   }
   
   @override
@@ -467,7 +472,7 @@ class _CalendarPageState extends State<CalendarPage> {
             builder: (context) {
               return AlertDialog(
                 scrollable: true,
-                title: Text("Add Event for " + _selectedDay.toString()),
+                title: Text("Add Event"),
                 content: Padding(
                   padding: EdgeInsets.all(8),
                   child: Column(
@@ -491,12 +496,22 @@ class _CalendarPageState extends State<CalendarPage> {
                   ElevatedButton(
                     onPressed: () {
                       //Push event to db
-                      events.addAll({
-                        _selectedDay!: [Event(_eventNameController.text, "", DateTime.now(), DateTime.now())]
-                      });
+                      Event addEvent = Event(_eventNameController.text, _eventContentController.text, DateTime.now(), DateTime.now().add(Duration(hours: 1)));
+                      
+                      if (events.containsKey(_selectedDay)) {
+                        events[_selectedDay]!.add(
+                          addEvent
+                        );
+                      } else {
+                        events[_selectedDay!] = [
+                          addEvent
+                        ];
+                      }
+
+                      _selectedEvents.value = _getEventsForDay(_selectedDay!);
                       Navigator.of(context).pop();
                     }, 
-                    child: Text("Submit Event"),
+                    child: Text("Submit"),
                   )
                 ],
               );
@@ -513,7 +528,7 @@ class _CalendarPageState extends State<CalendarPage> {
       padding: const EdgeInsets.all(20.0),
       child: Column(
         children: [
-          TableCalendar(
+          TableCalendar<Event>(
             rowHeight: 50,
             headerStyle: HeaderStyle(
               formatButtonVisible: false,
@@ -524,15 +539,42 @@ class _CalendarPageState extends State<CalendarPage> {
             calendarFormat: CalendarFormat.month,
             startingDayOfWeek: StartingDayOfWeek.sunday,
             onDaySelected: _onDaySelected,
+            eventLoader: _getEventsForDay,
             selectedDayPredicate: (day)=>isSameDay(_selectedDay, day),
             calendarStyle: CalendarStyle(
+              //Customized Calendar UI here
               outsideDaysVisible: false,
             ),
             onPageChanged: (focusedDay) {
               _focusedDay = focusedDay;
             },
           ),
-          SizedBox(height: 8)
+          SizedBox(height: 8),
+          //Emotion Event Here
+          //Other Events here
+          Expanded(
+            child: ValueListenableBuilder<List<Event>>(
+              valueListenable: _selectedEvents, 
+              builder: (context, value, _) {
+                return ListView.builder(
+                  itemCount: value.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(), 
+                        borderRadius: BorderRadius.circular(12)
+                      ),
+                      child: ListTile(
+                        onTap: () => print(value[index].title),
+                        title: Text(value[index].title),
+                      ),
+                    );
+                  }
+                );
+              }
+            ),
+          ),
         ],
       )
     );
