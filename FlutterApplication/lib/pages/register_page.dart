@@ -32,7 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
       if (_isConfirmMatch()) {
         try {
           final response = await http.post(
-            Uri.parse('${dotenv.env['VITE_API_URL']}/register'),
+            Uri.parse('${dotenv.env['VITE_API_URL']}/auth/register'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({
               'firstName': _firstNameController.text,

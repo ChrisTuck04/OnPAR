@@ -26,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.env['VITE_API_URL']}/login'),
+        Uri.parse('${dotenv.env['VITE_API_URL']}/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _emailController.text,
@@ -42,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => const CalendarPage(),
+                builder: (context) => CalendarPage(token: data['token']),
               ),
             );
           }

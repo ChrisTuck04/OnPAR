@@ -1,29 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../event.dart';
+import '../models/event.dart';
+import '../services/event_service.dart';
 import 'login_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CalendarPage extends StatefulWidget {
-  const CalendarPage({super.key});
+  final String token;
+  const CalendarPage({super.key, required this.token});
 
   @override
   State<CalendarPage> createState() => _CalendarPageState();
 }
 
 class _CalendarPageState extends State<CalendarPage> {
+  late final EventService _eventService;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   Map<DateTime, List<Event>> events = {};
-  Map<DateTime, String> emotionOnDay = {};
-  TextEditingController _eventNameController = TextEditingController();
-  TextEditingController _eventContentController = TextEditingController();
   late final ValueNotifier<List<Event>> _selectedEvents;
+  final TextEditingController _eventNameController = TextEditingController();
+  final TextEditingController _eventContentController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+    _eventService = EventService(widget.token);
     _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+    _fetchEvents();
   }
 
   @override
@@ -32,7 +37,7 @@ class _CalendarPageState extends State<CalendarPage> {
     super.dispose();
   }
 
-  List<Event> _getEventsForDay(DateTime day) => events[day] ?? [];
+  List<Event> _getEventsForDay(DateTime day) => events[DateTime.utc(day.year, day.month, day.day)] ?? [];
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     if (!isSameDay(_selectedDay, selectedDay)) {
@@ -42,6 +47,50 @@ class _CalendarPageState extends State<CalendarPage> {
       });
     }
     _selectedEvents.value = _getEventsForDay(selectedDay);
+  }
+
+  Future<void> _fetchEvents() async {
+    try {
+      final start = DateTime.now().subtract(Duration(days: 30));
+      final end = DateTime.now().add(Duration(days: 30));
+      final fetched = await _eventService.fetchEvents(start, end);
+      setState(() {
+        for (var event in fetched) {
+          final key = DateTime.utc(event.startTime.year, event.startTime.month, event.startTime.day);
+          if (events[key] == null) events[key] = [];
+          events[key]!.add(event);
+        }
+        _selectedEvents.value = _getEventsForDay(_selectedDay!);
+      });
+    } catch (e) {
+      print("Error fetching events: $e");
+    }
+  }
+
+  void _submitEvent() async {
+    final event = Event(
+      title: _eventNameController.text,
+      content: _eventContentController.text,
+      startTime: _selectedDay!,
+      endTime: _selectedDay!.add(Duration(hours: 1)),
+    );
+
+    bool success = await _eventService.createEvent(event);
+    if (success) {
+      final key = DateTime.utc(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
+      setState(() {
+        if (events[key] == null) events[key] = [];
+        events[key]!.add(event);
+        _selectedEvents.value = _getEventsForDay(_selectedDay!);
+      });
+      _eventNameController.clear();
+      _eventContentController.clear();
+      Navigator.of(context).pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to create event. Please try again.')),
+      );
+    }
   }
 
   @override
@@ -54,7 +103,7 @@ class _CalendarPageState extends State<CalendarPage> {
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
             onPressed: () {
-              Navigator.pushReplacement (
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginPage()),
               );
@@ -80,23 +129,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               actions: [
                 ElevatedButton(
-                  onPressed: () {
-                    final event = Event(
-                      _eventNameController.text,
-                      _eventContentController.text,
-                      DateTime.now(),
-                      DateTime.now().add(const Duration(hours: 1)),
-                    );
-
-                    if (events.containsKey(_selectedDay)) {
-                      events[_selectedDay]!.add(event);
-                    } else {
-                      events[_selectedDay!] = [event];
-                    }
-
-                    _selectedEvents.value = _getEventsForDay(_selectedDay!);
-                    Navigator.of(context).pop();
-                  },
+                  onPressed: _submitEvent,
                   child: const Text("Submit"),
                 )
               ],
