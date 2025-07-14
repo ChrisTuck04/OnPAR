@@ -1,65 +1,208 @@
-import LogoutButton from '../components/Logout.tsx';
+
 import GolfBackground from "../components/General/GolfBackground"
-import WholeCalendar from "../components/CalendarComponents/WholeCalendar"
-import EmotionCard from "../components/EmotionCardComponents/EmotionCard.tsx"
-import { useState } from 'react';
+import CalendarContainer from "../components/CalendarPage/CalendarComponents/CalendarContainer.tsx";
+import EmotionCard from "../components/CalendarPage/EmotionCardComponents/EmotionCard.tsx"
+import HappyTheme from '../components/CalendarPage/HappyComponents/HappyTheme.tsx';
+import SadTheme from '../components/CalendarPage/SadComponents/SadTheme.tsx';
+import PleasantTheme from '../components/CalendarPage/PleasantComponents/PleasantTheme.tsx';
+import AngryTheme from '../components/CalendarPage/AngryComponents/AngryTheme.tsx';
+import DropdownMenu from '../components/CalendarPage/DropdownMenuComponents/DropdownMenu.tsx';
+import DropdownButton from '../components/CalendarPage/DropdownMenuComponents/DropdownButton.tsx';
+import { useState, useEffect } from 'react';
+//import dayjs from "dayjs";
+//import type { User } from "../types/User"
+import type { Emotions } from "../types/Emotions.ts";
+
+//import { createEmotion, readEmotion, updateEmotions,deleteEmotion } from "../api/emotions"
+
+// @ts-expect-error axios functions in js
+import { getUser } from "../api/auth"
+import type { AxiosError } from "axios";
+
 
 const CalendarPage = () => {
-  const isLoggedIn = !!localStorage.getItem("token")
-
   const [emotionCard, setEmotionCard] = useState(true)
   const [calendar, setCalendar] = useState(false)
+  const [happyTheme, setHappyTheme] = useState(false);
+  const [sadTheme, setSadTheme] = useState(false);
+  const [pleasantTheme, setPleasantTheme] = useState(true);
+  const [angryTheme, setAngryTheme] = useState(false);
+  const [dropdownMenu, setDropdownMenu] = useState(false)
+  const [menuButton, setMenuButton] = useState(false)
 
-  const CloseCard = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setEmotionCard(false)
-    setCalendar(true)
-    e.stopPropagation()
-  }
+  /*these are the useStates for user object, all
+   emotions of the user per day they logged it,
+   and events list that holds all the events the
+   user made. Will need to parse the events list
+   even further when adding events to the */
 
-  const OpenCard = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setEmotionCard(true)
+  //const [emotions, setEmotions] = useState<Emotions[]>([])
+
+  const [userName, setUserName] = useState("")
+
+  const CardVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if(emotionCard === true)
+      setEmotionCard(false)
+    else if(emotionCard == false)
+    {
+      setEmotionCard(true)
+      setDropdownMenu(false)
+    }
     setCalendar(false)
     e.stopPropagation()
   }
 
-  /*
-  const CloseCalendar = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setCalendar(false)
+  const CalendarVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if(calendar === true)
+    {
+      setCalendar(false)
+      setMenuButton(true)
+    }
+    else if(calendar === false && emotionCard === false)
+    {
+      setCalendar(true)
+      setDropdownMenu(false)
+    }
     e.stopPropagation()
   }
-  */
 
-  /*
-  const OpenCalendar = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setCalendar(true)
+  const OpenDropdownMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setDropdownMenu(true)
+    setMenuButton(false)
     e.stopPropagation()
   }
-  */
+
+  const CloseDropdownMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    setDropdownMenu(false)
+    setMenuButton(true)
+    e.stopPropagation()
+  }
+
+  const Happy = (e : React.MouseEvent<HTMLButtonElement>) => {
+      setHappyTheme(true)
+      setAngryTheme(false)
+      setPleasantTheme(false)
+      setSadTheme(false)
+      setEmotionCard(false)
+      setMenuButton(true)
+      e.stopPropagation()
+  }
+
+  const Sad = (e : React.MouseEvent<HTMLButtonElement>) => {
+      setHappyTheme(false)
+      setAngryTheme(false)
+      setPleasantTheme(false)
+      setSadTheme(true)
+      setEmotionCard(false)
+      setMenuButton(true)
+      e.stopPropagation()
+  }
+
+  const Pleasant = (e : React.MouseEvent<HTMLButtonElement>) => {
+      setHappyTheme(false)
+      setAngryTheme(false)
+      setPleasantTheme(true)
+      setSadTheme(false)
+      setEmotionCard(false)
+      setMenuButton(true)
+      e.stopPropagation()
+  }
+
+  const Angry = (e : React.MouseEvent<HTMLButtonElement>) => {
+      setHappyTheme(false)
+      setAngryTheme(true)
+      setPleasantTheme(false)
+      setSadTheme(false)
+      setEmotionCard(false)
+      setMenuButton(true)
+      e.stopPropagation()
+  }
+
+  const fetchUserName = async () => {
+    try {
+      const user = await getUser()
+      setUserName(user.firstName)
+    } catch (err : unknown) {
+      const error = err as AxiosError<{error : string}>
+      alert(error.response?.data?.error || "retrieving user first name failed")
+    }
+  }
+
+  useEffect(() => {
+    fetchUserName()
+  }, [])
 
   return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="fixed snap-center z-10">
-          {calendar && <WholeCalendar/>}
+
+        <WelcomeHeader name={userName}/>
+
+        <div className="fixed snap-center z-30">
+          {calendar && <CalendarContainer ExitCalendar={CalendarVisibility}/>}
         </div>
 
-        <div className="fixed bottom-0 w-screen">
+        <div className="fixed bottom-0 w-screen z-[5]">
           <GolfBackground/>
         </div>
 
-        <div className="absolute top-4 right-4">
-          {isLoggedIn && <LogoutButton />}
+        <div className="fixed snap-center z-40">
+          {emotionCard && <EmotionCard Happy={Happy} Pleasant={Pleasant} Sad={Sad} Angry={Angry}/>}
         </div>
 
-        <div className="fixed snap-center z-20">
-          {emotionCard && <EmotionCard CardVisibility={CloseCard}/>}
+        <div>
+          {menuButton && <DropdownButton OpenDropdownMenu={OpenDropdownMenu}/>}
+          {dropdownMenu && <DropdownMenu 
+          CardVisibility={CardVisibility} 
+          CalendarVisibility={CalendarVisibility} 
+          ReflectionVisibility={()=> null} 
+          FriendsListVisibility={()=> null}
+          CloseDropdownMenu={CloseDropdownMenu}/>}
         </div>
 
-        <div className="absolute top-4 right-4 font-fredoka" style={{WebkitTextStroke: "1px #FFAA00"}}>
-          <button className="w-[193px] h-[52px] hover:bg-onparOrange border-[3px] border-onparOrange bg-onparLightYellow rounded-2xl p-5 text-l" onClick={OpenCard}>
-            <span className="relative bottom-[6px]">Emotions</span>
-          </button>
-        </div>
+        <div>
+          {happyTheme && <HappyTheme/>}
+          {sadTheme && <SadTheme/>}
+          {pleasantTheme && <PleasantTheme/>}
+          {angryTheme && <AngryTheme/>}
+        </div>  
       </div>
+  )
+}
+
+/*
+const DateTimeHeader = () => {
+
+  const [currTime, setCurrTime] = useState(dayjs())
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrTime(dayjs())
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="fixed w-full h-full flex flex-col items-center top-[200px] text-[60px] font-fredoka text-white z-[25]"
+          style={{WebkitTextStroke: "1px #D2C1B6"}}>
+      <p className="flex justify-center items-center w-[800px] h-[100px]">Today is {currTime.format("dddd")}</p>
+      <p className="flex justify-center items-center w-[800px] h-[100px]">{currTime.format("MMMM D, YYYY")}</p>
+      <p className="flex justify-center items-center w-[600px] h-[100px]">{currTime.format("hh:mm A")}</p>
+    </div>
+  )
+}
+*/
+
+interface Props {
+  name: string
+}
+
+const WelcomeHeader = ({name} : Props) => {
+  return (
+    <div className="fixed flex flex-col items-center w-full h-full top-[100px] text-white font-fredoka text-[65px] z-[25]"
+          style={{WebkitTextStroke: "1px #D2C1B6"}}>
+      <p className="flex items-center justify-center w-[800px] h-[100px]">Welcome {name}!</p>
+    </div>
   )
 }
 

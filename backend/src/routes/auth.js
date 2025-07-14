@@ -2,6 +2,8 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Events = require("../models/Events");
+const Emotions = require("../models/Emotions");
 const { randomUUID } = require('crypto');
 const sgMail = require('@sendgrid/mail');
 require("dotenv").config();
@@ -11,9 +13,10 @@ const router = express.Router();
 // Email setup
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+
 // Helper function for sending email
 const sendVerificationEmail = async (email, verificationToken) => {
-  const verificationLink = `${process.env.BASE_URL}/auth/verify-email?token=${verificationToken}`;
+  const verificationLink = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
 
   const message = {
     from: process.env.SENDGRID_SENDER_EMAIL,
@@ -70,6 +73,28 @@ const sendResetEmail = async (email, resetToken) => {
     throw new Error('Failed to send password reset email via SendGrid.');
   }
 };
+
+function authenticateToken(req, res, next)
+{
+  const authHeader = req.headers['authorization'];
+
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) 
+  {
+    return res.status(401).json({ message: 'Authentication token required' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+        console.error("JWT verification error:", err.message);
+        return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+    
+    req.user = user;
+    next();
+});
+}
 
 // Register API
 router.post("/register", async (req, res) => {
@@ -200,6 +225,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// Forgot Password API
 router.post("/forgot-password", async (req, res) => {
   const{ email } = req.body;
 
@@ -229,6 +255,7 @@ router.post("/forgot-password", async (req, res) => {
   }
 })
 
+// Reset Password API
 router.post("/reset-password", async (req, res) => {
   const{token, newPassword} = req.body;
 
@@ -259,4 +286,25 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
-module.exports = router;
+//Read User (For Names)
+router.post("/read-user", authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try
+  {
+    const user = await User.findOne({
+      _id: userId
+    });
+
+    res.status(200).json({ message: "User retrieved successfully", firstName: user.firstName, lastName: user.lastName });
+
+    
+  }
+  catch(error)
+  {
+    console.error("Read user error:", error);
+    res.status(500).json({ error: "Failed to retrieve user." });
+  }
+})
+
+module.exports = { router, authenticateToken };
