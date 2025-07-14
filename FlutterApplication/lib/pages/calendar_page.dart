@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/event.dart';
 import '../services/event_service.dart';
 import 'login_page.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+var logger = Logger(output: null);
 
 class CalendarPage extends StatefulWidget {
   final String token;
@@ -63,7 +65,7 @@ class _CalendarPageState extends State<CalendarPage> {
         _selectedEvents.value = _getEventsForDay(_selectedDay!);
       });
     } catch (e) {
-      print("Error fetching events: $e");
+      logger.e("Error fetching events: $e");
     }
   }
 
@@ -85,11 +87,15 @@ class _CalendarPageState extends State<CalendarPage> {
       });
       _eventNameController.clear();
       _eventContentController.clear();
-      Navigator.of(context).pop();
+      if(mounted) {
+        Navigator.of(context).pop();
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create event. Please try again.')),
-      );
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to create event. Please try again.')),
+        );
+      }
     }
   }
 
@@ -176,7 +182,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListTile(
-                        onTap: () => print(value[index].title),
+                        //onTap: () => print(value[index].title),
                         title: Text(value[index].title),
                       ),
                     );

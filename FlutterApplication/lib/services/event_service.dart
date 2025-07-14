@@ -1,8 +1,11 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 import 'dart:convert';
 
 import '../models/event.dart';
+
+var logger = Logger(output: null);
 
 class EventService {
   final String baseUrl = dotenv.env['VITE_API_URL'] ?? '';
@@ -22,8 +25,8 @@ class EventService {
       body: jsonEncode(event.toJson()),
     );
 
-    print('CreateEvent status: ${response.statusCode}');
-    print('CreateEvent response: ${response.body}');
+    logger.i('CreateEvent status: ${response.statusCode}');
+    logger.i('CreateEvent response: ${response.body}');
 
     return response.statusCode == 201;
   }
