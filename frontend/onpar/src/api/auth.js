@@ -2,6 +2,16 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  };
+};
+
 export const registerUser = async (userData) => {
   const response = await axios.post(`${API_URL}/register`, userData);
   return response.data;
@@ -28,4 +38,9 @@ export const resetPassword = async (token, newPassword) => {
     newPassword,
   });
   return response.data;
+}
+
+export const getUser = async() => {
+  const response = await axios.post(`${API_URL}/read-user`, {}, getAuthHeaders())
+  return response.data
 }

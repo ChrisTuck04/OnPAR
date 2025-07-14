@@ -93,6 +93,7 @@ const LoginPage = () => {
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
+
           {errors.password && (
             <p className="text-red-600 text-sm mt-1 text-center">{errors.password}</p>
           )}
