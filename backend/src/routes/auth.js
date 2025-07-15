@@ -234,7 +234,7 @@ router.post("/forgot-password", async (req, res) => {
     const user = await User.findOne({ email });
     if(!user)
     {
-      res.status(200).json({ message: "Password Reset Email Sent" });
+      return res.status(400).json({ error: "Password reset token is invalid or has expired." });
     }
 
     const resetToken = randomUUID();
