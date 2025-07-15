@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'calendar_page.dart';
 import 'register_page.dart';
+import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -77,11 +78,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _resetPassword() {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const LoginPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const ForgotPasswordPage()),
     );
   }
 

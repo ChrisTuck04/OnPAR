@@ -21,6 +21,13 @@ class _CalendarPageState extends State<CalendarPage> {
   late final ValueNotifier<List<Event>> _selectedEvents;
   final TextEditingController _eventNameController = TextEditingController();
   final TextEditingController _eventContentController = TextEditingController();
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
+  Map<String, bool> _recurringDays = {
+    'Sun': false, 'Mon': false, 'Tue': false, 'Wed': false,
+    'Thu': false, 'Fri': false, 'Sat': false,
+  };
+  bool _applyToSelectedDay = true;
 
   @override
   void initState() {
@@ -37,7 +44,19 @@ class _CalendarPageState extends State<CalendarPage> {
     super.dispose();
   }
 
-  List<Event> _getEventsForDay(DateTime day) => events[DateTime.utc(day.year, day.month, day.day)] ?? [];
+  List<Event> _getEventsForDay(DateTime day) {
+    List<Event> dailyEvents = events[DateTime.utc(day.year, day.month, day.day)] ?? [];
+    for (var entry in events.entries) {
+      for (var event in entry.value) {
+        if (event.recurring && event.recurDays != null && event.recurDays!.contains(day.weekday % 7)) {
+          if (!dailyEvents.contains(event)) {
+            dailyEvents.add(event);
+          }
+        }
+      }
+    }
+    return dailyEvents;
+  }
 
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     if (!isSameDay(_selectedDay, selectedDay)) {
@@ -68,23 +87,46 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   void _submitEvent() async {
+    final selectedDate = _applyToSelectedDay ? _selectedDay! : DateTime.now();
+    final key = DateTime.utc(selectedDate.year, selectedDate.month, selectedDate.day);
+
+    final startDateTime = DateTime(
+      selectedDate.year, selectedDate.month, selectedDate.day,
+      _startTime?.hour ?? 0, _startTime?.minute ?? 0,
+    );
+    final endDateTime = DateTime(
+      selectedDate.year, selectedDate.month, selectedDate.day,
+      _endTime?.hour ?? 1, _endTime?.minute ?? 0,
+    );
+
+    final recurDays = _recurringDays.entries
+      .where((e) => e.value)
+      .map((e) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(e.key))
+      .toList();
+
     final event = Event(
       title: _eventNameController.text,
       content: _eventContentController.text,
-      startTime: _selectedDay!,
-      endTime: _selectedDay!.add(Duration(hours: 1)),
+      startTime: startDateTime,
+      endTime: endDateTime,
+      recurring: recurDays.isNotEmpty,
+      recurDays: recurDays,
     );
 
     bool success = await _eventService.createEvent(event);
     if (success) {
-      final key = DateTime.utc(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
       setState(() {
-        if (events[key] == null) events[key] = [];
+        events.putIfAbsent(key, () => []);
         events[key]!.add(event);
+
         _selectedEvents.value = _getEventsForDay(_selectedDay!);
       });
+
       _eventNameController.clear();
       _eventContentController.clear();
+      _startTime = null;
+      _endTime = null;
+      _recurringDays.updateAll((key, value) => false);
       Navigator.of(context).pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -97,9 +139,13 @@ class _CalendarPageState extends State<CalendarPage> {
     if (event.id == null) return;
     bool success = await _eventService.deleteEvent(event.id!);
     if (success) {
-      final key = DateTime.utc(event.startTime.year, event.startTime.month, event.startTime.day);
       setState(() {
-        events[key]!.remove(event);
+        for (var key in events.keys.toList()) {
+          events[key]!.removeWhere((e) => e.id == event.id);
+          if (events[key]!.isEmpty) {
+            events.remove(key);
+          }
+        }
         _selectedEvents.value = _getEventsForDay(_selectedDay!);
       });
     } else {
@@ -112,6 +158,14 @@ class _CalendarPageState extends State<CalendarPage> {
   void _editEvent(Event event) {
     _eventNameController.text = event.title;
     _eventContentController.text = event.content;
+    _startTime = TimeOfDay.fromDateTime(event.startTime);
+    _endTime = TimeOfDay.fromDateTime(event.endTime);
+    _recurringDays.updateAll((key, _) => false);
+    if (event.recurDays != null) {
+      for (var dayIndex in event.recurDays!) {
+        _recurringDays[['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayIndex]] = true;
+      }
+    }
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -123,6 +177,30 @@ class _CalendarPageState extends State<CalendarPage> {
             children: [
               TextField(controller: _eventNameController, decoration: const InputDecoration(hintText: 'Event Name')),
               TextField(controller: _eventContentController, decoration: const InputDecoration(hintText: 'Event Description')),
+              ListTile(
+                title: Text(_startTime != null ? 'Start: ${_startTime!.format(context)}' : 'Pick Start Time'),
+                onTap: () async {
+                  final picked = await showTimePicker(context: context, initialTime: _startTime ?? TimeOfDay.now());
+                  if (picked != null) setState(() => _startTime = picked);
+                },
+              ),
+              ListTile(
+                title: Text(_endTime != null ? 'End: ${_endTime!.format(context)}' : 'Pick End Time'),
+                onTap: () async {
+                  final picked = await showTimePicker(context: context, initialTime: _endTime ?? TimeOfDay.now());
+                  if (picked != null) setState(() => _endTime = picked);
+                },
+              ),
+              Wrap(
+                spacing: 6,
+                children: _recurringDays.keys.map((day) {
+                  return FilterChip(
+                    label: Text(day),
+                    selected: _recurringDays[day]!,
+                    onSelected: (val) => setState(() => _recurringDays[day] = val),
+                  );
+                }).toList(),
+              ),
             ],
           ),
         ),
@@ -133,8 +211,17 @@ class _CalendarPageState extends State<CalendarPage> {
                 id: event.id,
                 title: _eventNameController.text,
                 content: _eventContentController.text,
-                startTime: event.startTime,
-                endTime: event.endTime,
+                startTime: DateTime(
+                  event.startTime.year, event.startTime.month, event.startTime.day,
+                  _startTime?.hour ?? 0, _startTime?.minute ?? 0,
+                ),
+                endTime: DateTime(
+                  event.endTime.year, event.endTime.month, event.endTime.day,
+                  _endTime?.hour ?? 1, _endTime?.minute ?? 0,
+                ),
+                recurring: _recurringDays.containsValue(true),
+                recurDays: _recurringDays.entries.where((e) => e.value)
+                    .map((e) => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(e.key)).toList(),
               );
               bool success = await _eventService.updateEvent(updatedEvent);
               if (success) {
@@ -178,27 +265,100 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          setState(() {
+            _eventNameController.clear();
+            _eventContentController.clear();
+            _startTime = null;
+            _endTime = null;
+            _applyToSelectedDay = true;
+            _recurringDays.updateAll((key, _) => false);
+          });
+
           showDialog(
             context: context,
-            builder: (context) => AlertDialog(
-              scrollable: true,
-              title: const Text("Add Event"),
-              content: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  children: [
-                    TextField(controller: _eventNameController, decoration: const InputDecoration(hintText: 'Event Name')),
-                    TextField(controller: _eventContentController, decoration: const InputDecoration(hintText: 'Event Description')),
-                  ],
-                ),
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: _submitEvent,
-                  child: const Text("Submit"),
-                )
-              ],
-            ),
+            builder: (context) {
+              return StatefulBuilder(
+                builder: (context, setDialogState) {
+                  return AlertDialog(
+                    scrollable: true,
+                    title: const Text("Add Event"),
+                    content: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _eventNameController,
+                            decoration: const InputDecoration(hintText: 'Event Name'),
+                          ),
+                          TextField(
+                            controller: _eventContentController,
+                            decoration: const InputDecoration(hintText: 'Event Description'),
+                          ),
+                          const SizedBox(height: 12),
+                          ListTile(
+                            title: Text(_startTime != null
+                                ? 'Start: ${_startTime!.format(context)}'
+                                : 'Pick Start Time'),
+                            onTap: () async {
+                              final picked = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                              );
+                              if (picked != null) {
+                                setState(() => _startTime = picked);
+                                setDialogState(() {});
+                              }
+                            },
+                          ),
+                          ListTile(
+                            title: Text(_endTime != null
+                                ? 'End: ${_endTime!.format(context)}'
+                                : 'Pick End Time'),
+                            onTap: () async {
+                              final picked = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.now(),
+                              );
+                              if (picked != null) {
+                                setState(() => _endTime = picked);
+                                setDialogState(() {});
+                              }
+                            },
+                          ),
+                          Wrap(
+                            spacing: 6,
+                            children: _recurringDays.keys.map((day) {
+                              return FilterChip(
+                                label: Text(day),
+                                selected: _recurringDays[day]!,
+                                onSelected: (val) {
+                                  setState(() => _recurringDays[day] = val);
+                                  setDialogState(() {});
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          SwitchListTile(
+                            title: const Text("Apply to Selected Day"),
+                            value: _applyToSelectedDay,
+                            onChanged: (value) {
+                              setState(() => _applyToSelectedDay = value);
+                              setDialogState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      ElevatedButton(
+                        onPressed: _submitEvent,
+                        child: const Text("Submit"),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
           );
         },
         child: const Icon(Icons.add),
@@ -206,6 +366,7 @@ class _CalendarPageState extends State<CalendarPage> {
       body: _buildContent(),
     );
   }
+
 
   Widget _buildContent() {
     return Padding(
@@ -243,7 +404,16 @@ class _CalendarPageState extends State<CalendarPage> {
                       ),
                       child: ListTile(
                         title: Text(event.title),
-                        subtitle: Text(event.content),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(event.content),
+                            Text('From: ${event.startTime}'),
+                            Text('To: ${event.endTime}'),
+                            if (event.recurring)
+                              Text('Repeats on: ${event.recurDays?.map((d) => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}'),
+                          ],
+                        ),
                         trailing: Wrap(
                           spacing: 8,
                           children: [
