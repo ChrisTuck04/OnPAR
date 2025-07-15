@@ -93,6 +93,71 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
+  void _deleteEvent(Event event) async {
+    if (event.id == null) return;
+    bool success = await _eventService.deleteEvent(event.id!);
+    if (success) {
+      final key = DateTime.utc(event.startTime.year, event.startTime.month, event.startTime.day);
+      setState(() {
+        events[key]!.remove(event);
+        _selectedEvents.value = _getEventsForDay(_selectedDay!);
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete event.')),
+      );
+    }
+  }
+
+  void _editEvent(Event event) {
+    _eventNameController.text = event.title;
+    _eventContentController.text = event.content;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        scrollable: true,
+        title: const Text("Edit Event"),
+        content: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            children: [
+              TextField(controller: _eventNameController, decoration: const InputDecoration(hintText: 'Event Name')),
+              TextField(controller: _eventContentController, decoration: const InputDecoration(hintText: 'Event Description')),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () async {
+              final updatedEvent = Event(
+                id: event.id,
+                title: _eventNameController.text,
+                content: _eventContentController.text,
+                startTime: event.startTime,
+                endTime: event.endTime,
+              );
+              bool success = await _eventService.updateEvent(updatedEvent);
+              if (success) {
+                final key = DateTime.utc(event.startTime.year, event.startTime.month, event.startTime.day);
+                setState(() {
+                  int index = events[key]!.indexOf(event);
+                  events[key]![index] = updatedEvent;
+                  _selectedEvents.value = _getEventsForDay(_selectedDay!);
+                });
+                Navigator.of(context).pop();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to update event.')),
+                );
+              }
+            },
+            child: const Text("Save Changes"),
+          )
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,6 +234,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 return ListView.builder(
                   itemCount: value.length,
                   itemBuilder: (context, index) {
+                    final event = value[index];
                     return Container(
                       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                       decoration: BoxDecoration(
@@ -176,8 +242,21 @@ class _CalendarPageState extends State<CalendarPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListTile(
-                        onTap: () => print(value[index].title),
-                        title: Text(value[index].title),
+                        title: Text(event.title),
+                        subtitle: Text(event.content),
+                        trailing: Wrap(
+                          spacing: 8,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () => _editEvent(event),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete),
+                              onPressed: () => _deleteEvent(event),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
