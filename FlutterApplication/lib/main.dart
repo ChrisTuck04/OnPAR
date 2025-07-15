@@ -1,9 +1,11 @@
-// main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/pages/login_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'pages/login_page.dart';
+import 'package:logger/logger.dart';
 
-Future<void> main() async {
+var logger = Logger(output: null);
+
+Future main() async {
   await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
