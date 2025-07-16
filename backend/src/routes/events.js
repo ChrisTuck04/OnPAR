@@ -1,5 +1,6 @@
 const express = require("express");
 const Events = require("../models/Events");
+const User = require("../models/User");
 const { authenticateToken } = require("./auth");
 
 const router = express.Router();
@@ -7,7 +8,7 @@ const router = express.Router();
 // Create Event API
 router.post("/create-event", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { title, content, startTime, endTime, recurring, color, recurDays, recurEnd } = req.body;
+  const { title, content, startTime, endTime, recurring, color, recurDays, recurEnd, sharedEmails } = req.body;
 
   try {
     if(recurring !== true)
@@ -18,7 +19,8 @@ router.post("/create-event", authenticateToken, async (req, res) => {
         startTime,
         endTime,
         userId: userId,
-        color
+        color,
+        sharedEmails
       });
   
       await newEvent.save();
@@ -36,7 +38,8 @@ router.post("/create-event", authenticateToken, async (req, res) => {
         userId: userId,
         color,
         recurDays,
-        recurEnd
+        recurEnd,
+        sharedEmails
       });
   
       await newEvent.save();
@@ -53,7 +56,7 @@ router.post("/create-event", authenticateToken, async (req, res) => {
 // Update Event API
 router.post("/update-event", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { title, content, startTime, endTime, recurring, color, eventId, recurDays, recurEnd} = req.body;
+  const { title, content, startTime, endTime, recurring, color, eventId, recurDays, recurEnd, sharedEmails} = req.body;
 
   try
   {
@@ -99,6 +102,10 @@ router.post("/update-event", authenticateToken, async (req, res) => {
     {
       event.recurEnd = recurEnd;
     }
+    if(sharedEmails !== undefined)
+    {
+      event.sharedEmails = sharedEmails;
+    }
 
     await event.save();
 
@@ -136,19 +143,42 @@ router.post("/read-event", authenticateToken, async (req, res) => {
 
   try
   {
+    const user = await User.findOne({
+      userId: userId
+    });
+    userEmail = user.email
     const events = await Events.find({
-      userId: userId,
       $or: [
         {
-            startTime: { $gte: queryStartDate, $lt: queryEndDate }
-        },
-        {
-            endTime: { $gt: queryStartDate, $lte: queryEndDate }
-        },
-        {
-            startTime: { $lt: queryStartDate },
-            endTime: { $gt: queryEndDate }
-        }
+          userId: userId,
+          $or: [
+            {
+                startTime: { $gte: queryStartDate, $lt: queryEndDate }
+            },
+            {
+                endTime: { $gt: queryStartDate, $lte: queryEndDate }
+            },
+            {
+                startTime: { $lt: queryStartDate },
+                endTime: { $gt: queryEndDate }
+            }
+          ]
+      },
+      {
+        sharedEmails: userEmail,
+        $or: [
+          {
+              startTime: { $gte: queryStartDate, $lt: queryEndDate }
+          },
+          {
+              endTime: { $gt: queryStartDate, $lte: queryEndDate }
+          },
+          {
+              startTime: { $lt: queryStartDate },
+              endTime: { $gt: queryEndDate }
+          }
+        ]
+      }
       ]
     }).sort({startTime: 1 });
 
