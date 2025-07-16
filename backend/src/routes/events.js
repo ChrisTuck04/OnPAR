@@ -25,7 +25,7 @@ router.post("/create-event", authenticateToken, async (req, res) => {
   
       await newEvent.save();
   
-        res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, userId: userId, color} });
+        res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, userId: userId, color, sharedEmails} });
     }
     else
     {
@@ -44,7 +44,7 @@ router.post("/create-event", authenticateToken, async (req, res) => {
   
       await newEvent.save();
   
-        res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, recurring, userId: userId, color, recurDays, recurEnd} });
+        res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, recurring, userId: userId, color, recurDays, recurEnd, sharedEmails} });
     }
     
   } catch (error) {
