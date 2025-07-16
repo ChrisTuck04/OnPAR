@@ -144,8 +144,10 @@ router.post("/read-event", authenticateToken, async (req, res) => {
   try
   {
     const user = await User.findOne({
-      userId: userId
+      _id: userId
     });
+
+    
     userEmail = user.email
     const events = await Events.find({
       $or: [
