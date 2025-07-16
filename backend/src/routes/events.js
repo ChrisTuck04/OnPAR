@@ -10,21 +10,40 @@ router.post("/create-event", authenticateToken, async (req, res) => {
   const { title, content, startTime, endTime, recurring, color, recurDays, recurEnd } = req.body;
 
   try {
-    const newEvent = new Events({
-      title,
-      content,
-      startTime,
-      endTime,
-      recurring,
-      userId: userId,
-      color,
-      recurDays,
-      recurEnd
-    });
-
-    await newEvent.save();
-
-      res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, recurring, userId: userId, color, recurDays, recurEnd} });
+    if(recurring !== true)
+    {
+      const newEvent = new Events({
+        title,
+        content,
+        startTime,
+        endTime,
+        userId: userId,
+        color
+      });
+  
+      await newEvent.save();
+  
+        res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, userId: userId, color} });
+    }
+    else
+    {
+      const newEvent = new Events({
+        title,
+        content,
+        startTime,
+        endTime,
+        recurring,
+        userId: userId,
+        color,
+        recurDays,
+        recurEnd
+      });
+  
+      await newEvent.save();
+  
+        res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, recurring, userId: userId, color, recurDays, recurEnd} });
+    }
+    
   } catch (error) {
       console.error("Error creating event:", error);
       res.status(500).json({ error: "Failed to create event." });
