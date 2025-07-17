@@ -1,5 +1,6 @@
 const express = require("express");
 const Events = require("../models/Events");
+const User = require("../models/User");
 const { authenticateToken } = require("./auth");
 
 const router = express.Router();
@@ -7,24 +8,45 @@ const router = express.Router();
 // Create Event API
 router.post("/create-event", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { title, content, startTime, endTime, recurring, color, recurDays, recurEnd } = req.body;
+  const { title, content, startTime, endTime, recurring, color, recurDays, recurEnd, sharedEmails } = req.body;
 
   try {
-    const newEvent = new Events({
-      title,
-      content,
-      startTime,
-      endTime,
-      recurring,
-      userId: userId,
-      color,
-      recurDays,
-      recurEnd
-    });
-
-    await newEvent.save();
-
-      res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, recurring, userId: userId, color, recurDays, recurEnd} });
+    if(recurring !== true)
+    {
+      const newEvent = new Events({
+        title,
+        content,
+        startTime,
+        endTime,
+        userId: userId,
+        color,
+        sharedEmails
+      });
+  
+      await newEvent.save();
+  
+        res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, userId: userId, color, sharedEmails} });
+    }
+    else
+    {
+      const newEvent = new Events({
+        title,
+        content,
+        startTime,
+        endTime,
+        recurring,
+        userId: userId,
+        color,
+        recurDays,
+        recurEnd,
+        sharedEmails
+      });
+  
+      await newEvent.save();
+  
+        res.status(201).json({ message: `Event created successfully for user ${userId}`, event: { title, content, startTime, endTime, recurring, userId: userId, color, recurDays, recurEnd, sharedEmails} });
+    }
+    
   } catch (error) {
       console.error("Error creating event:", error);
       res.status(500).json({ error: "Failed to create event." });
@@ -34,7 +56,7 @@ router.post("/create-event", authenticateToken, async (req, res) => {
 // Update Event API
 router.post("/update-event", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { title, content, startTime, endTime, recurring, color, eventId, recurDays, recurEnd} = req.body;
+  const { title, content, startTime, endTime, recurring, color, eventId, recurDays, recurEnd, sharedEmails} = req.body;
 
   try
   {
@@ -80,6 +102,10 @@ router.post("/update-event", authenticateToken, async (req, res) => {
     {
       event.recurEnd = recurEnd;
     }
+    if(sharedEmails !== undefined)
+    {
+      event.sharedEmails = sharedEmails;
+    }
 
     await event.save();
 
@@ -117,19 +143,44 @@ router.post("/read-event", authenticateToken, async (req, res) => {
 
   try
   {
+    const user = await User.findOne({
+      _id: userId
+    });
+
+    
+    userEmail = user.email
     const events = await Events.find({
-      userId: userId,
       $or: [
         {
-            startTime: { $gte: queryStartDate, $lt: queryEndDate }
-        },
-        {
-            endTime: { $gt: queryStartDate, $lte: queryEndDate }
-        },
-        {
-            startTime: { $lt: queryStartDate },
-            endTime: { $gt: queryEndDate }
-        }
+          userId: userId,
+          $or: [
+            {
+                startTime: { $gte: queryStartDate, $lt: queryEndDate }
+            },
+            {
+                endTime: { $gt: queryStartDate, $lte: queryEndDate }
+            },
+            {
+                startTime: { $lt: queryStartDate },
+                endTime: { $gt: queryEndDate }
+            }
+          ]
+      },
+      {
+        sharedEmails: userEmail,
+        $or: [
+          {
+              startTime: { $gte: queryStartDate, $lt: queryEndDate }
+          },
+          {
+              endTime: { $gt: queryStartDate, $lte: queryEndDate }
+          },
+          {
+              startTime: { $lt: queryStartDate },
+              endTime: { $gt: queryEndDate }
+          }
+        ]
+      }
       ]
     }).sort({startTime: 1 });
 
