@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/event.dart';
 import '../services/event_service.dart';
@@ -23,7 +24,7 @@ class _CalendarPageState extends State<CalendarPage> {
   DateTime? _startDateTime;
   DateTime? _endDateTime;
   DateTime? _recurringEnd;
-  Map<String, bool> _recurringDays = {
+  final Map<String, bool> _recurringDays = {
     'Sun': false, 'Mon': false, 'Tue': false, 'Wed': false,
     'Thu': false, 'Fri': false, 'Sat': false,
   };
@@ -115,11 +116,15 @@ class _CalendarPageState extends State<CalendarPage> {
     if(success) {
       await _fetchEvents();
       _clearForm();
-      Navigator.of(context).pop();
+      if(mounted) {
+        Navigator.of(context).pop();
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(id == null ? 'Failed to create event.' : 'Failed to update event.')),
-      );
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(id == null ? 'Failed to create event.' : 'Failed to update event.')),
+        );
+      }
     }
   }
 
@@ -142,15 +147,19 @@ class _CalendarPageState extends State<CalendarPage> {
           _selectedEvents.value = _getEventsForDay(_selectedDay!);
         });
       } else {
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to delete event.')),
+          );
+        }
+      }
+    } catch (e) {
+      print("Delete error: $e");
+      if(mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to delete event.')),
         );
       }
-    } catch (e) {
-      print("Delete error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete event.')),
-      );
     }
   }
 
@@ -329,8 +338,8 @@ class _CalendarPageState extends State<CalendarPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(event.content),
-                            Text('From: ${event.startTime.toLocal()}'),
-                            Text('To: ${event.endTime.toLocal()}'),
+                            Text('From: ${DateFormat('hh:mm:ss').format(event.startTime.toLocal())}'),
+                            Text('To: ${DateFormat('hh:mm:ss').format(event.endTime.toLocal())}'),
                             if (event.recurring)
                               Text('Repeats on: ${event.recurDays?.map((d) => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}'),
                             if (event.recurring && event.recurEnd != null)
