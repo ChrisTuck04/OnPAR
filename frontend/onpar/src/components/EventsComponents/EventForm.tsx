@@ -204,7 +204,7 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
       alert("Please enter a valid date")
     else {
       const currentYear = new Date().getFullYear()
-      const fullDateString = `${currentYear}-${recurEndDate}T00:00:00`
+      const fullDateString = `${currentYear}-${recurEndDate.padStart(2,'0')}T00:00:00`
       const parsedDate = new Date(fullDateString)
 
       console.log("Debug recurEndDate:", recurEndDate);
@@ -558,20 +558,27 @@ const Time = ({buttonName, updateStartOrEndTime} : Props) => {
   const [updatePeriod, setUpdatePeriod] = useState<string>("")
 
   const concatenateTimeSegments = () => {
-    if(updateHour !== "" && updateInterval !== "" && updatePeriod !== "") {
-      if(updatePeriod === "am") {
-        return `${updateHour}:${updateInterval}`
-      } else {
-        const hour = parseInt(updateHour) + 12
-        const stringHour = hour.toString()
-        setUpdateHour(stringHour)
-        return `${updateHour}:${updateInterval}`
-      }
-    }
+    if (updateHour !== "" && updateInterval !== "" && updatePeriod !== "") {
+        let hour24 = parseInt(updateHour);
 
-    else {
-      alert("Must choose a valid time!")
-      return null
+        if (updatePeriod === "pm" && hour24 !== 12) {
+            // For 1 PM to 11 PM, add 12 to the hour
+            hour24 += 12;
+        } else if (updatePeriod === "am" && hour24 === 12) {
+            // For 12 AM (midnight), it's 00 in 24-hour format
+            hour24 = 0;
+        }
+        // If it's 12 PM, hour24 (which is 12) remains 12, which is correct in 24-hour format.
+        // For 1 AM to 11 AM, hour24 remains as is, which is correct in 24-hour format.
+
+        // Ensure the hour is always two digits (e.g., "9" becomes "09")
+        const formattedHour = String(hour24).padStart(2, '0')
+
+        return `${formattedHour}:${updateInterval}`
+    } else {
+        // Handle incomplete time selection (e.g., show an alert or return null)
+        alert("Must choose a valid time!"); // Consider more user-friendly feedback
+        return null;
     }
   }
 
