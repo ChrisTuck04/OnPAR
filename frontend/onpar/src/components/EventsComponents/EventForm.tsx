@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef, useCallback} from "react"
+import {useState, useEffect, useRef, useCallback, KeyboardEvent} from "react"
 import {motion} from "framer-motion"
 // @ts-expect-error events interface import
 import type { Events } from "../types/Events" 
@@ -14,7 +14,27 @@ interface Props {
   handleRecurring? : (data : (boolean | number[])[]) => void
   selectedDays? : number[]
   toggleDay? : (day : number) => void 
+  buttonName? : string
+  updateTimeData? : (data : string) => void
+  updateStartOrEndTime? : (data : string) => void
+  timeSegment? : string
+  recurEndDateSegment? : string
+  updateRecurEndDateSegment? : (e : React.ChangeEvent<HTMLInputElement>) => void
+  recurEndDateKeyDownFunction? : (
+    e: KeyboardEvent,
+    hideInput: () => void, // Add this parameter
+    showButton: () => void // Add this parameter
+  ) => void
 }
+
+const isValidMMDDFormat = (date : string) : boolean => {
+    const mmddRegex = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
+    if(!mmddRegex.test(date))
+      return false
+    else
+      return true
+    
+  }
 
 const EventForm = ({addEvent, exitEventForm} : Props) => {
 
@@ -52,6 +72,7 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
   const [dateInput, setDateInput] = useState<string>("")
   const [startTime, setStartTime] = useState<string>("")
   const [endTime, setEndTime] = useState<string>("")
+  const [recurEndDate, setRecurEndDate] = useState<string>("")
 
   //useEffect for the description box.
   useEffect(() => {
@@ -154,18 +175,69 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
       if (!startDateTime || !endDateTime) {
           console.warn("One or both date/time values are currently invalid. Please check your inputs.");
       }
-    } else {
-        // If not all inputs are filled, we can't create valid Date objects yet.
-        // The event's startTime and endTime will retain their default/previous values.
     }
   }, [dateInput, startTime, endTime, setEvent, combineDateInputs])
+
+  const updateStartTime = (data : string) => {
+    setStartTime(data)
+  }
+
+  const updateEndTime = (data : string) => {
+    setEndTime(data)
+  }
 
   useEffect(() => {
       handleDateTimeUpdate()
   }, [handleDateTimeUpdate])
 
+  //updates the recurEndDate string 
+  //will be in onChange() prop
+  const updateRecurEndDate = (e : React.ChangeEvent<HTMLInputElement>) => {
+    setRecurEndDate(e.currentTarget.value)
+  }
+
+
+  //helper function inside of handleRecurEndDate that will combine date and time and check for date format errors
+  const combineRecurEndDateWithManualTime = useCallback(() => {
+    const isValidDate = isValidMMDDFormat(recurEndDate)
+
+    if(!isValidDate) 
+      alert("Please enter a valid date")
+    else {
+      const currentYear = new Date().getFullYear()
+      const fullDateString = `${currentYear}-${recurEndDate}T00:00:00}`
+      const parsedDate = new Date(fullDateString)
+
+      if(isNaN(parsedDate.getTime())) {
+        console.error("Invalid date or time input:", fullDateString)
+        return null
+      } else {
+        return parsedDate
+      }
+    }
+  }, [recurEndDate])
+
+   //converts recurEndTime string to a date and sets it to corresponding event field.
+  //also needs to validate if its in MM-DD format, if not display and error --> helper function
+  //will be in the onKeyDown prop
+  const handleRecurEndDate = useCallback((e: KeyboardEvent<HTMLInputElement>, closeInput : () => void,  openButton : () => void) => {
+    if(e.key === 'Enter') {
+      const recurEndFullDate = combineRecurEndDateWithManualTime()
+      if(recurEndFullDate) {
+        setEvent((prevEvent: Events) => ({
+          ...prevEvent,
+          recurEnd: recurEndFullDate || prevEvent.recurEndFullDate, 
+        }))
+
+        closeInput()
+        openButton()
+      }
+    }
+  }, [combineRecurEndDateWithManualTime])
+
+
   return (
-    <div className="h-full flex flex-col items-center w-[300px] bg-[#F9F3EF] border-[4px] border-[#D2C1B6] gap-4 font-fredoka text-[25px] rounded-tr-3xl rounded-br-3xl overflow-hidden"
+    <div className="h-full flex flex-col items-center w-[300px] bg-[#F9F3EF] border-[4px] border-[#D2C1B6] gap-4 font-fredoka text-[25px] rounded-tr-3xl rounded-br-3xl"
          style={{WebkitTextStroke:"1px #D2C1B6"}}>
       
       <form className="flex flex-col items-center mt-4 gap-4" onSubmit={addEvent}>
@@ -179,7 +251,7 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
         style={{WebkitTextStroke:"0px"}}
         />
 
-        <div className="relative flex flex-row justify-between gap-2 rounded-xl font-fredoka ">
+        <div className="relative flex flex-row justify-between rounded-xl font-fredoka gap-2">
           <input
           type="text"
           className="w-[90px] h-[40px] rounded-xl bg-[#D2C1B6] placeholder-black text-center text-[16px]"
@@ -187,26 +259,19 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
           value={dateInput}
           onChange={(e) => setDateInput(e.target.value)}/>
 
-          <input
-          type="text"
-          className="w-[80px] rounded-xl bg-[#D2C1B6] placeholder-black text-center text-[18px]"
-          placeholder="HH:mm"
-          value={startTime}
-          onChange={(e) => setStartTime(e.target.value)}/>
+          <Time buttonName="Start" updateStartOrEndTime={updateStartTime}/>
 
-          <p className="w-[10px]">-</p>
+          <Time buttonName="End" updateStartOrEndTime={updateEndTime}/>
 
-          <input
-          type="text"
-          className="w-[80px] rounded-xl bg-[#D2C1B6] placeholder-black text-center text-[18px]"
-          placeholder="HH:mm"
-          value={endTime}
-          onChange={(e) => setEndTime(e.target.value)}/>
         </div>
         
         <div className="relative flex flex-flow justify-between gap-4">
-          <div className=" flex justify-center items-center w-[150px] h-[45px] rounded-xl border-[2px] border-[#D2C1B6]">
-            <Recurring handleRecurring={handleRecurring}/>
+          <div className=" flex justify-center items-center w-[150px] h-[45px] rounded-xl border-[2px] border-[#D2C1B6] ">
+            <Recurring
+            handleRecurring={handleRecurring}
+            recurEndDateSegment={recurEndDate}
+            updateRecurEndDateSegment={updateRecurEndDate}
+            recurEndDateKeyDownFunction={handleRecurEndDate}/>
           </div>
 
           <div className="flex justify-center items-center w-[100px] h-[45px] rounded-xl border-[2px] border-[#D2C1B6]">
@@ -258,9 +323,11 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
   )
 }
 
-const Recurring = ({handleRecurring} : Props) => {
+const Recurring = ({handleRecurring, recurEndDateSegment, updateRecurEndDateSegment, recurEndDateKeyDownFunction} : Props) => {
 
   const [open, setOpen] = useState(false)
+  const [recurEndDateInputView, setRecurEndDateInputView] = useState(false)
+  const [recurEndDateButton, setRecurEndDateButton] = useState(true)
   const recurringOptions = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
   const [selectedDays, setSelectedDays] = useState<number[]>([])
 
@@ -282,7 +349,8 @@ const Recurring = ({handleRecurring} : Props) => {
       handleRecurring!([false, []])
     setOpen(false)
   }
-  
+
+
   return (
     <div
     className="relative flex flex-col justify-center items-center w-[200px] h-[45px] hover:bg-[#D2C1B6] rounded-xl"
@@ -294,7 +362,7 @@ const Recurring = ({handleRecurring} : Props) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1}}
           exit={{ opacity: 0}}
-          className="flex flex-col justify-center items-center w-[150px] h-[350px] border-[2px] bg-[#F9F3EF] border-[#D2C1B6] rounded-xl gap-2">
+          className="flex flex-col justify-center items-center w-[150px] h-[400px] border-[2px] bg-[#F9F3EF] border-[#D2C1B6] rounded-xl gap-2">
             {recurringOptions.map((option, index) => (
               <RecurringButton
               key={index}
@@ -303,6 +371,25 @@ const Recurring = ({handleRecurring} : Props) => {
               toggleDay={toggleDay}/>
             ))}
 
+            {recurEndDateButton && <button
+            type="button"
+            className="border-[2px] border-[#D2C1B6] font-fredoka text-[20px] rounded-xl w-[130px] hover:bg-[#D2C1B6]"
+            onClick={() => {
+              setRecurEndDateButton(false)
+              setRecurEndDateInputView(true)
+            }}>
+              End
+            </button>
+            }
+
+            {recurEndDateInputView && <input
+            type="text"
+            placeholder="MM-DD"
+            value={recurEndDateSegment}
+            onChange={updateRecurEndDateSegment}
+            onKeyDown={(e) => recurEndDateKeyDownFunction!(e, () => setRecurEndDateInputView(false), () => setRecurEndDateButton(true))}
+            className="bg-[#D2C1B6] font-fredoka text-[18px] text-black placeholder-black w-[130px] h-[35px] rounded-xl p-2"/>
+            }
             <button
             className="border-[2px] border-[#D2C1B6] font-fredoka text-[20px] rounded-xl w-[130px] hover:bg-[#D2C1B6]"
             type="button"
@@ -440,6 +527,137 @@ const ColorButton = ({setColorName, color, handleChange} : Props) => {
     style={{background : Color[0]}}
     name="color"
     value={color}>
+    </button>
+  )
+}
+
+const Time = ({buttonName, updateStartOrEndTime} : Props) => {
+
+  const [open, setOpen] = useState(false)
+  const hour = ["1", "2", "3", "4", "6", "7", "8", "9", "10", "11", "12"]
+  const intervals = ["00", "15", "30", "45"]
+  const amORpm = ["am", "pm"]
+  const [updateHour, setUpdateHour] = useState<string>("")
+  const [updateInterval, setUpdateInterval] = useState<string>("")
+  const [updatePeriod, setUpdatePeriod] = useState<string>("")
+
+  const concatenateTimeSegments = () => {
+    if(updateHour !== "" && updateInterval !== "" && updatePeriod !== "") {
+      if(updatePeriod === "am") {
+        return `${updateHour}:${updateInterval}`
+      } else {
+        const hour = parseInt(updateHour) + 12
+        const stringHour = hour.toString()
+        setUpdateHour(stringHour)
+        return `${updateHour}:${updateInterval}`
+      }
+    }
+
+    else {
+      alert("Must choose a valid time!")
+      return null
+    }
+  }
+
+  const updateHourString = (data : string) => {
+    if(updateHour === "") {
+      setUpdateHour(data)
+    } else {
+      setUpdateHour("")
+    }
+  }
+
+  const updateIntervalString = (data : string) => {
+    if(updateInterval === "") {
+      setUpdateInterval(data)
+    } else {
+      setUpdateInterval("")
+    }
+  }
+
+  const updatePeriodString = (data : string) => {
+    if(updatePeriod === "") {
+      setUpdatePeriod(data)
+    } else {
+      setUpdatePeriod("")
+    }
+  }
+
+  const validTimeString = () => {
+
+    const validTimeStr : string | null = concatenateTimeSegments()
+
+    if(validTimeString !== null) {
+      updateStartOrEndTime!(validTimeStr!)
+      setOpen(false)
+    }
+  }
+
+  return (
+    <div 
+    className="relative flex flex-col justify-center items-center w-[80px] h-[40px] hover:bg-[#D2C1B6] border-[2px] border-[#D2C1B6] rounded-xl"
+    onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <p className="text-[20px] font-fredoka">{buttonName}</p>
+      <div className="absolute top-[38px] z-50">
+        {open && 
+        <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1}}
+        exit={{ opacity: 0}}
+        className="flex flex-col items-center w-[180px] h-[440px] border-[2px] bg-[#F9F3EF] border-[#D2C1B6] rounded-xl p-2 gap-2">
+          <div className="flex flex-row justify-between gap-2">
+            <div className="relative flex flex-col gap-2 top-[5px]">
+              {hour.map((hour, index) => (
+                <TimeButton
+                key={index}
+                buttonName={hour}
+                updateTimeData={updateHourString}
+                timeSegment={updateHour}/>
+              ))}
+            </div>
+
+            <div className="relative flex flex-col gap-2 top-[5px]">
+              {intervals.map((interval, index) => (
+                <TimeButton
+                key={index}
+                buttonName={interval}
+                updateTimeData={updateIntervalString}
+                timeSegment={updateInterval}/>
+              ))}
+            </div>
+
+            <div className="relative flex flex-col gap-2 top-[5px]">
+              {amORpm.map((options, index) => (
+                <TimeButton
+                key={index}
+                buttonName={options}
+                updateTimeData={updatePeriodString}
+                timeSegment={updatePeriod}/>
+              ))}
+            </div>
+          </div> 
+
+          <button
+          type="button"
+          className="w-[150px] h-[50px] font-fredoka text-[15px] rounded-xl border-[2px] border-[#D2C1B6] hover:bg-[#D2C1B6]"
+          onClick={validTimeString}>
+            Done
+          </button>
+
+        </motion.div>}
+      </div>
+    </div>
+  )
+}
+
+const TimeButton = ({buttonName, updateTimeData, timeSegment} : Props) => {
+  const bgColor = timeSegment && timeSegment === buttonName ? "[#D2C1B6]" : "[#F9F3EF]"
+  return (
+    <button
+    className={`bg-${bgColor} border-[2px] border-[#D2C1B6] font-fredoka text-[15px] rounded-xl w-[50px] hover:bg-[#D2C1B6]`}
+    type="button"
+    onClick={() => updateTimeData!(buttonName!)}>
+      {buttonName}
     </button>
   )
 }
