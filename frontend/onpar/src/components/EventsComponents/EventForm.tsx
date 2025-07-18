@@ -21,7 +21,7 @@ interface Props {
   recurEndDateSegment? : string
   updateRecurEndDateSegment? : (e : React.ChangeEvent<HTMLInputElement>) => void
   recurEndDateKeyDownFunction? : (
-    e: KeyboardEvent,
+    e: KeyboardEvent<HTMLInputElement>,
     hideInput: () => void, // Add this parameter
     showButton: () => void // Add this parameter
   ) => void
@@ -29,7 +29,7 @@ interface Props {
 
 const isValidMMDDFormat = (date : string) : boolean => {
     const mmddRegex = /^(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/
-    if(!mmddRegex.test(date))
+    if(mmddRegex.test(date) === false)
       return false
     else
       return true
@@ -196,17 +196,19 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
     setRecurEndDate(e.currentTarget.value)
   }
 
-
   //helper function inside of handleRecurEndDate that will combine date and time and check for date format errors
   const combineRecurEndDateWithManualTime = useCallback(() => {
     const isValidDate = isValidMMDDFormat(recurEndDate)
 
-    if(!isValidDate) 
+    if(isValidDate === false) 
       alert("Please enter a valid date")
     else {
       const currentYear = new Date().getFullYear()
-      const fullDateString = `${currentYear}-${recurEndDate}T00:00:00}`
+      const fullDateString = `${currentYear}-${recurEndDate}T00:00:00`
       const parsedDate = new Date(fullDateString)
+
+      console.log("Debug recurEndDate:", recurEndDate);
+      console.log("Debug fullDateString:", fullDateString)
 
       if(isNaN(parsedDate.getTime())) {
         console.error("Invalid date or time input:", fullDateString)
@@ -222,6 +224,7 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
   //will be in the onKeyDown prop
   const handleRecurEndDate = useCallback((e: KeyboardEvent<HTMLInputElement>, closeInput : () => void,  openButton : () => void) => {
     if(e.key === 'Enter') {
+      e.preventDefault()
       const recurEndFullDate = combineRecurEndDateWithManualTime()
       if(recurEndFullDate) {
         setEvent((prevEvent: Events) => ({
@@ -249,6 +252,10 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
         onChange={handleChange}
         placeholder="Title"
         style={{WebkitTextStroke:"0px"}}
+        onKeyDown={(e) => {
+        if (e.key === 'Enter')
+          e.preventDefault()
+        }}
         />
 
         <div className="relative flex flex-row justify-between rounded-xl font-fredoka gap-2">
@@ -257,7 +264,12 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
           className="w-[90px] h-[40px] rounded-xl bg-[#D2C1B6] placeholder-black text-center text-[16px]"
           placeholder="MM-DD"
           value={dateInput}
-          onChange={(e) => setDateInput(e.target.value)}/>
+          onChange={(e) => setDateInput(e.target.value)}
+          onKeyDown={(e) => {
+          if (e.key === 'Enter')
+            e.preventDefault()
+          }}
+          />
 
           <Time buttonName="Start" updateStartOrEndTime={updateStartTime}/>
 
@@ -302,8 +314,11 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
         onChange={handleChange}
         placeholder="Add Description"
         rows={1}
-        required>
-          
+        onKeyDown={(e) => {
+        if (e.key === 'Enter')
+          e.preventDefault()
+        }}>
+        
         </textarea>
 
         <button
@@ -371,7 +386,7 @@ const Recurring = ({handleRecurring, recurEndDateSegment, updateRecurEndDateSegm
               toggleDay={toggleDay}/>
             ))}
 
-            {recurEndDateButton && <button
+            {recurEndDateButton && (selectedDays.length !== 0) && <button
             type="button"
             className="border-[2px] border-[#D2C1B6] font-fredoka text-[20px] rounded-xl w-[130px] hover:bg-[#D2C1B6]"
             onClick={() => {
@@ -388,7 +403,8 @@ const Recurring = ({handleRecurring, recurEndDateSegment, updateRecurEndDateSegm
             value={recurEndDateSegment}
             onChange={updateRecurEndDateSegment}
             onKeyDown={(e) => recurEndDateKeyDownFunction!(e, () => setRecurEndDateInputView(false), () => setRecurEndDateButton(true))}
-            className="bg-[#D2C1B6] font-fredoka text-[18px] text-black placeholder-black w-[130px] h-[35px] rounded-xl p-2"/>
+            className="bg-[#D2C1B6] font-fredoka text-[18px] text-black placeholder-black w-[130px] h-[35px] rounded-xl p-2"
+            />
             }
             <button
             className="border-[2px] border-[#D2C1B6] font-fredoka text-[20px] rounded-xl w-[130px] hover:bg-[#D2C1B6]"
