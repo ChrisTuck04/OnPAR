@@ -13,3 +13,8 @@
   placeholder="HH:mm"
   value={endTime}
   onChange={(e) => setEndTime(e.target.value)}/>
+
+  onKeyDown={(e) => {
+    if (e.key === 'Enter')
+      e.preventDefault()
+  }
