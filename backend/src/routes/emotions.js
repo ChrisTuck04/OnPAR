@@ -7,7 +7,7 @@ const router = express.Router();
 // Create Emotion API
 router.post("/create-emotion", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { emotion, content, title } = req.body;
+  const { emotion, leftContent, rightContent, title } = req.body;
 
   if (!emotion) {
     return res.status(400).json({ error: "Emotion is required." });
@@ -16,7 +16,8 @@ router.post("/create-emotion", authenticateToken, async (req, res) => {
   try {
     const newEmotion = new Emotions({
       emotion,
-      content: content || "",
+      leftContent: leftContent || "",
+      rightContent: rightContent || "",
       userId: userId,
       title: title
     });
@@ -28,7 +29,8 @@ router.post("/create-emotion", authenticateToken, async (req, res) => {
       emotion: {
         id: newEmotion._id,
         emotion: newEmotion.emotion,
-        content: newEmotion.content,
+        leftContent: newEmotion.leftContent,
+        rightContent: newEmotion.rightContent,
         createdAt: newEmotion.createdAt,
         userId: newEmotion.userId,
         title: newEmotion.title
@@ -74,7 +76,7 @@ router.post("/read-emotions", authenticateToken, async (req, res) => {
 // Update Emotion API
 router.post("/update-emotion", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { emotionId, emotion, content, title } = req.body;
+  const { emotionId, emotion, leftContent, title } = req.body;
 
   if (!emotionId) {
     return res.status(400).json({ error: "emotionId is required." });
@@ -93,8 +95,13 @@ router.post("/update-emotion", authenticateToken, async (req, res) => {
     if (emotion !== undefined) {
       emotionEntry.emotion = emotion;
     }
-    if (content !== undefined) {
-      emotionEntry.content = content;
+
+    if (leftContent !== undefined) {
+      emotionEntry.content = leftContent;
+    }
+
+    if (rightContent !== undefined) {
+      emotionEntry.content = rightContent;
     }
 
     if (title !== undefined) {

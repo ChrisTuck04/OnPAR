@@ -1,0 +1,84 @@
+interface JournalProps {
+  onCloseJournal: (e: React.MouseEvent<HTMLButtonElement>) => void;
+}
+
+const Journal = ({ onCloseJournal }: JournalProps) => {
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  // Define the common style for lined paper background
+  // This creates a repeating horizontal line every 28px
+  const linedPaperStyle = {
+    backgroundImage: `repeating-linear-gradient(to bottom, #FFAA00 0px, #FFAA00 1px, transparent 1px, transparent 28px)`,
+    backgroundSize: '100% 28px', // Each line block is 28px high
+    backgroundPositionY: '27px' , // Start lines from content area
+  };
+
+  return (
+    <motion.div
+      initial={{ scaleX: 0 }}
+      animate={{ scaleX: 1 }}
+      exit={{ scaleX: 0 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+      className="fixed inset-0 flex items-center justify-center  bg-opacity-30 z-50"
+    >
+      <motion.div
+        className="flex w-[1000px] h-[700px] bg-onparOrange rounded-[40px] shadow-xl origin-left overflow-hidden"
+      >
+        {/* Left Page */}
+        <div
+          className="w-1/2 p-6 border-4 border-onparOrange bg-onparLightYellow font-fredoka rounded-bl-[40px] rounded-tl-[40px] relative"
+        >
+          <input
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            // Title input has its own bottom border, acting as a line.
+            // Adjust padding-bottom to create space for the lines below it.
+            className="w-full text-2xl font-bold bg-transparent border-b-2 border-black focus:outline-none placeholder-black pb-2"
+            style={{ WebkitTextStroke: "0px" }} // Ensure no text stroke on input
+          />
+          <textarea
+            placeholder="Write your thoughts..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            // Ensure textarea background is transparent to show lines
+            // Set line-height to match the background line spacing
+            className="mt-2 w-full h-[600px] bg-transparent resize-none focus:outline-none text-lg placeholder-black"
+            // Merged the two style attributes into one
+            style={{ ...linedPaperStyle, lineHeight: '28px', WebkitTextStroke: "0px" }}
+          />
+        </div>
+
+        {/* Right Page */}
+        <div
+          className="w-1/2 p-6 flex flex-col items-start justify-between border-t-4 border-r-4 border-b-4 border-onparOrange bg-onparLightYellow gap-2 rounded-br-[40px] rounded-tr-[40px]"
+        >
+          {/* Content area for right page - this div will now have the lines */}
+          <div
+            className="flex-grow w-full"
+            // Merged the two style attributes into one
+            style={{ ...linedPaperStyle, WebkitTextStroke: "0px" }}
+          >
+            {/* You can add static lines or render content here */}
+          </div>
+
+          <div className="flex flex-row items-end justify-center w-full gap-2 mt-auto">
+
+            <button
+            className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition">
+              Save
+            </button>
+
+            <button
+            onClick={onCloseJournal}
+            className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition">
+              Close
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
