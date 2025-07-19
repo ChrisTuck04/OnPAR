@@ -13,6 +13,9 @@ import {motion, AnimatePresence} from "framer-motion"
 // @ts-expect-error axios functions in js
 import { getUser } from "../api/auth"
 import type { AxiosError } from "axios";
+import type { Emotions } from "../types/Emotions"
+// @ts-expect-error events interface import
+import {createEmotion} from "../api/emotions"
 
 
 const CalendarPage = () => {
@@ -25,7 +28,9 @@ const CalendarPage = () => {
   const [dropdownMenu, setDropdownMenu] = useState(false)
   const [menuButton, setMenuButton] = useState(false)
   const [userName, setUserName] = useState("")
+  const [userId, setUserId] = useState("")
   const [openJournal, setOpenJournal] = useState<boolean>(false)
+  const [curEmotion, setCurEmotion] = useState<string>("")
 
   const CardVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
     if(emotionCard === true)
@@ -108,6 +113,7 @@ const CalendarPage = () => {
   const fetchUserName = async () => {
     try {
       const user = await getUser()
+      setUserId(user.id)
       setUserName(user.firstName)
     } catch (err : unknown) {
       const error = err as AxiosError<{error : string}>
@@ -132,6 +138,10 @@ const CalendarPage = () => {
       e.stopPropagation()
     }
 
+    const changeCurrentEmotionField = (data : string) => {
+      setCurEmotion(data)
+    }
+
   return (
       <div className="min-h-screen flex items-center justify-center">
 
@@ -153,13 +163,16 @@ const CalendarPage = () => {
           Sad={Sad} 
           Angry={Angry}
           toggleJournalView={toggleJournalVisibility}
-          journalValid={openJournal}/>}
+          journalValid={openJournal}
+          changeEmotionField={changeCurrentEmotionField}/>}
         </div>
 
         <AnimatePresence>
 					{openJournal &&
           <Journal
           onCloseJournal={toggleJournalVisibility}
+          currentEmotion={curEmotion}
+          userID={userId}
           />}
 				</AnimatePresence>
 
@@ -222,12 +235,26 @@ const WelcomeHeader = ({name} : WelcomeHeaderProps) => {
 
 interface JournalProps {
   onCloseJournal: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  currentEmotion : string
+  userID : string
 }
 
-const Journal = ({ onCloseJournal }: JournalProps) => {
+const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
+  const [emotion, setEmotion] = useState<Emotions>({
+    emotion : "",
+    leftContent : "",
+    rightContent : "",
+    userId : "",
+    sharedEmails : [],
+    createdAt : new Date() 
+  })
+
+  const [emotionIcon, setEmotionIcon] = useState("")
   const [title, setTitle] = useState("");
   const [leftText, setLeftText] = useState("");
   const [rightText, setRightText] = useState("");
+  const [userId, setUserId] = useState("")
+  const [sharedEmails, setSharedEmails] = useState<string[]>([])
 
   // Refs for the textareas to measure their content height
   const leftTextAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -288,6 +315,68 @@ const Journal = ({ onCloseJournal }: JournalProps) => {
     }
   }, [rightText]); // Rerun this effect when rightText changes
 
+  useEffect(() => {
+    setEmotionIcon(currentEmotion)
+    console.log("emotion icon useEffect ran!")
+  }, [currentEmotion])
+
+  useEffect(() => {
+    setUserId(userID)
+  }, [userID])
+
+  const assignJournalEntryValues = () => {
+    if(title === "") {
+      alert("Invalid journal entry, title required!")
+      return
+    } else if(leftText === "" && rightText === "") {
+      alert("Invalid, please include a journal entry")
+      return
+    } else {
+
+      const updatedEmotion : Emotions = {
+        ...emotion,
+        emotion : emotionIcon,
+        leftContent : leftText,
+        rightContent : rightText,
+        userId : userId,
+        sharedEmails : sharedEmails,
+        createdAt : new Date()
+      }
+
+      setEmotion(updatedEmotion)
+      return updatedEmotion
+    }
+  }
+
+  const createEmotionObject = async (e : React.MouseEvent<HTMLButtonElement>, currentEmotion : Emotions) => {
+    try {
+
+      console.log("creating emotion")
+      const response = await createEmotion(currentEmotion)
+      console.log("created emotion successfully!", response)
+
+      setEmotion((prevEmotion) => ({
+        ...prevEmotion,
+        emotion : "",
+        leftContent : "",
+        rightContent : "",
+        sharedEmails : [],
+        createdAt : new Date()
+      }))
+
+      onCloseJournal(e)
+    } catch(err: unknown) {
+      const error = err as AxiosError<{error : string}>;
+      console.error("Error creating emotion object:", error.response?.data?.error || "Unknown error occurred.");
+      alert(`Failed to create emotion object: ${error.response?.data?.error || "Please try again."}`);
+    }
+  }
+
+  const emotionCreationWrapper = async (e : React.MouseEvent<HTMLButtonElement>) => {
+    const updatedEmotion = assignJournalEntryValues()
+    if(!updatedEmotion) return
+    await createEmotionObject(e, updatedEmotion)
+  }
 
   return (
     <motion.div
@@ -339,12 +428,15 @@ const Journal = ({ onCloseJournal }: JournalProps) => {
           />
 
           <div className="flex flex-row items-end justify-center w-full gap-2 mt-auto">
-            <button className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition">
+            <button
+            className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition"
+            onClick={emotionCreationWrapper}>
               Save
             </button>
+
             <button
-              onClick={onCloseJournal}
-              className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition"
+            onClick={onCloseJournal}
+            className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition"
             >
               Close
             </button>

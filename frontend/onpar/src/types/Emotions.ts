@@ -1,8 +1,8 @@
 export interface Emotions {
-  _id : string
   emotion : string
-  content : string
+  leftContent : string
+  rightContent : string
   userId : string
   sharedEmails : string[]
-  createdAt : string
+  createdAt : Date
 }
