@@ -1,7 +1,7 @@
 
 import GolfBackground from "../components/General/GolfBackground"
 import CalendarContainer from "../components/CalendarPage/CalendarComponents/CalendarContainer.tsx";
-import EmotionCard from "../components/CalendarPage/EmotionCardComponents/EmotionCard.tsx"
+import EmotionCard from "../components/CalendarPage/EmotionCard/JournalComponents/EmotionCard.tsx"
 import HappyTheme from '../components/CalendarPage/HappyComponents/HappyTheme.tsx';
 import SadTheme from '../components/CalendarPage/SadComponents/SadTheme.tsx';
 import PleasantTheme from '../components/CalendarPage/PleasantComponents/PleasantTheme.tsx';
