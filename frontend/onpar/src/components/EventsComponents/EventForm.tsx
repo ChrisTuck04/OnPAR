@@ -9,7 +9,8 @@ import type { AxiosError } from "axios"
 import { createEvents } from "../../api/events"
 
 interface Props {
-  exitEventForm? : (e : React.MouseEvent<HTMLButtonElement>) => void
+  exitEventForm? : (e : React.FormEvent<HTMLFormElement>) => void
+  goToCalendarMenu? : (e : React.MouseEvent<HTMLButtonElement>) => void
   setColorName? : (currColor : string) => void
   color? : number
   toggleEmailMenu? : (e : React.MouseEvent<HTMLButtonElement>) => void
@@ -40,7 +41,7 @@ const isValidMMDDFormat = (date : string) : boolean => {
     
   }
 
-const EventForm = ({exitEventForm} : Props) => {
+const EventForm = ({exitEventForm, goToCalendarMenu} : Props) => {
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null) 
   //const [events, setEvents] = useState<Events[]>([])
@@ -106,13 +107,18 @@ const EventForm = ({exitEventForm} : Props) => {
 
   //function for adding values to recurring fields
   const handleRecurring = ( data : (boolean | number[])[]) => {
-    const recurring = "recurring"
-    const recurDays = "recurDays"
 
-    setEvent({...event, [recurring] : data[0]})
-    setEvent({...event, [recurDays] : data[1]})
-    setEventErrors({...event, [recurring] : "No error, updated field successfully"})
-    setEventErrors({...event, [recurDays] : "No error, updated field successfully"})
+    setEvent((prevEvent: Events) => ({
+      ...prevEvent,
+      recurring: data[0] as boolean,
+      recurDays: data[1] as number[] , 
+    }));
+
+    setEventErrors((prevErrors) => ({
+      ...prevErrors,
+      recurring: "No error, updated field successfully",
+      recurDays: "No error, updated field successfully",
+    }))
   }
 
   const toggleEmailMenu = (e : React.MouseEvent<HTMLButtonElement>) => {
@@ -277,10 +283,21 @@ const EventForm = ({exitEventForm} : Props) => {
       console.log("Submitting event:", event); // For debugging
       const response = await createEvents(event); // Pass the entire event object
       console.log("Event created successfully:", response);
-      alert("Event created successfully!");
       // Optional: Reset form or redirect
-      // setEvent(initialEventState); // If you have an initial state constant
-      // exitEventForm(e as unknown as React.MouseEvent<HTMLButtonElement>); // Assuming exitEventForm exists and closes the form
+      setEvent((prevEvent : Event) => ({
+        ...prevEvent, // Spread the previous event state to retain existing properties
+        title: "",
+        content: "",
+        startTime: new Date(),
+        endTime: new Date(),
+        recurring: false,
+        userId: "", // or the logged-in user’s ID
+        sharedEmails: [],
+        color: 0,
+        recurDays: [],
+        recurEnd: new Date(),
+      }))
+      exitEventForm!(e)
     } catch (err: unknown) {
       const error = err as AxiosError<{error : string}>;
       console.error("Error creating event:", error.response?.data?.error || "Unknown error occurred.");
@@ -379,7 +396,7 @@ const EventForm = ({exitEventForm} : Props) => {
 
         <button
         className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl"
-        onClick={exitEventForm}>
+        onClick={goToCalendarMenu}>
           Cancel
         </button>
       </form>

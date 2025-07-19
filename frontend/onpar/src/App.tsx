@@ -2,8 +2,6 @@ import { Route, Routes } from 'react-router'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import CalendarPage from './pages/CalendarPage';
-import EventsPage from './pages/EventsPage';
-import JournalPage from './pages/JournalPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ResetPasswordSuccessPage from './pages/ResetPasswordSuccessPage';
 import RegisterPage from './pages/RegisterPage';
@@ -20,8 +18,6 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/journal" element={<JournalPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/reset-password-success" element={<ResetPasswordSuccessPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
