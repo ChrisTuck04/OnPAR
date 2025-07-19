@@ -3,12 +3,14 @@ class Emotion {
   final String emotion;
   final String? content;
   final String? uID;
+  final DateTime createdAt;
 
   Emotion({
     this.id,
     required this.emotion,
     this.content,
     this.uID,
+    required this.createdAt,
   });
 
   factory Emotion.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class Emotion {
       emotion: json['emotion'],
       content: json['content'],
       uID: json['userId'],
+      createdAt: json['createdAt']
     );
   }
 
@@ -25,6 +28,7 @@ class Emotion {
       'emotion': emotion,
       'content': content,
       'userId': uID,
+      'createdAt': createdAt,
     };
   }
 }

@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => CalendarPage(token: data['token']),
+                builder: (context) => CalendarPage(token: data['token'], uid: data['_id']),
               ),
             );
           }

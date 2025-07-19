@@ -1,13 +1,49 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/emotion.dart';
+import 'package:flutter_application_1/services/emotion_service.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../models/event.dart';
 import '../services/event_service.dart';
 import 'login_page.dart';
 
+var logger = Logger(output: null);
+
+late final String userIdent;
+
+typedef EmotionEntry = DropdownMenuEntry<EmotionTypes>;
+
+enum EmotionTypes {
+  neutral('Neutral', Colors.white),
+  happy('Happy', Colors.amber),
+  sad('Sad', Colors.blue),
+  angry('Angry', Colors.red);
+
+  const EmotionTypes(this.label, this.color);
+  final String label;
+  final Color color;
+
+  static final List<EmotionEntry> emotionTypeEntries = UnmodifiableListView<EmotionEntry>(
+    values.map<EmotionEntry>(
+      (EmotionTypes emotionType) => EmotionEntry(
+        value: emotionType,
+        label: emotionType.label,
+      ),
+    )
+  );
+}
+
 class CalendarPage extends StatefulWidget {
   final String token;
-  const CalendarPage({super.key, required this.token});
+  final String uid;
+  const CalendarPage({super.key, required this.token, required this.uid});
+
+  setUID() {
+    userIdent = uid;
+  }
 
   @override
   State<CalendarPage> createState() => _CalendarPageState();
@@ -15,10 +51,15 @@ class CalendarPage extends StatefulWidget {
 
 class _CalendarPageState extends State<CalendarPage> {
   late final EventService _eventService;
+  late final EmotionService _emotionService;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   Map<DateTime, List<Event>> events = {};
   late final ValueNotifier<List<Event>> _selectedEvents;
+  Map<DateTime, Emotion?> emotions = {};
+  late final ValueNotifier<Emotion> _selectedEmotion;
+  final TextEditingController _emotionTypeController = TextEditingController();
+  final TextEditingController _emotionContentController = TextEditingController();
   final TextEditingController _eventNameController = TextEditingController();
   final TextEditingController _eventContentController = TextEditingController();
   DateTime? _startDateTime;
@@ -29,13 +70,17 @@ class _CalendarPageState extends State<CalendarPage> {
     'Thu': false, 'Fri': false, 'Sat': false,
   };
 
+
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
     _eventService = EventService(widget.token);
+    _emotionService = EmotionService(widget.token);
     _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+    _selectedEmotion = ValueNotifier(_getEmotionForDay(_selectedDay!)!);
     _fetchEvents();
+    _fetchEmotions();
   }
 
   @override
@@ -60,6 +105,12 @@ class _CalendarPageState extends State<CalendarPage> {
     return dailyEvents;
   }
 
+  Emotion? _getEmotionForDay(DateTime day) {
+    final dateKey = DateTime.utc(day.year, day.month, day.day);
+
+    return emotions[dateKey];
+  }
+
   void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
     if (!isSameDay(_selectedDay, selectedDay)) {
       setState(() {
@@ -68,6 +119,7 @@ class _CalendarPageState extends State<CalendarPage> {
       });
     }
     _selectedEvents.value = _getEventsForDay(selectedDay);
+    _selectedEmotion.value = _getEmotionForDay(selectedDay)!;
   }
 
   Future<void> _fetchEvents() async {
@@ -88,7 +140,28 @@ class _CalendarPageState extends State<CalendarPage> {
         _selectedEvents.value = _getEventsForDay(_selectedDay!);
       });
     } catch (e) {
-      print("Error fetching events: $e");
+      logger.e("Error fetching events: $e");
+    }
+  }
+
+  Future<void> _fetchEmotions() async {
+    try {
+      final day = _selectedDay;
+      final fetched = await _emotionService.fetchEmotions(day!);
+      setState(() {
+        emotions.clear();
+        for(var emotion in fetched) {
+          final key = DateTime.utc(emotion.createdAt.year, emotion.createdAt.month, emotion.createdAt.day);
+          emotions.putIfAbsent(key, () => Emotion(emotion: 'Neutral', createdAt: day));
+
+          if(emotions[key]!.id != emotion.id) {
+            emotions[key] = emotion;
+          }
+        }
+        _selectedEmotion.value = _getEmotionForDay(_selectedDay!)!;
+      });
+    } catch (e) {
+      logger.e("Error fetching emotions: $e");
     }
   }
 
@@ -115,7 +188,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
     if(success) {
       await _fetchEvents();
-      _clearForm();
+      _clearEventForm();
       if(mounted) {
         Navigator.of(context).pop();
       }
@@ -128,13 +201,45 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  void _clearForm() {
+  void _submitEmotion({String? id}) async {
+    final emotion = Emotion(
+      id: id,
+      emotion: _emotionContentController.text, 
+      content: _emotionContentController.text,
+      createdAt: _selectedDay ?? _focusedDay,
+      uID: userIdent,
+    );
+
+    final success = id == null ? await _emotionService.createEmotion(emotion) : await _emotionService.updateEmotion(emotion);
+
+    if(success) {
+      await _fetchEmotions();
+      _clearEmotionForm();
+      if(mounted) {
+        Navigator.of(context).pop();
+      }
+      else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(id == null ? 'Failed to create emotion.' : 'Failed to update emotion.')),
+          );
+        }
+      }
+    }
+  }
+
+  void _clearEventForm() {
     _eventNameController.clear();
     _eventContentController.clear();
     _startDateTime = null;
     _endDateTime = null;
     _recurringEnd = null;
     _recurringDays.updateAll((key, _) => false);
+  }
+
+  void _clearEmotionForm() {
+    _emotionContentController.clear();
+    _emotionTypeController.clear();
   }
 
   void _deleteEvent(Event event) async {
@@ -154,13 +259,76 @@ class _CalendarPageState extends State<CalendarPage> {
         }
       }
     } catch (e) {
-      print("Delete error: $e");
+      logger.e("Delete error: $e");
       if(mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to delete event.')),
         );
       }
     }
+  }
+
+  void _deleteEmotion(Emotion emotion) async {
+    if(emotion.id == null) return;
+    try {
+      bool success = await _emotionService.deleteEmotion(emotion.id!);
+      if(success) {
+        await _fetchEmotions();
+        setState(() {
+          _selectedEmotion.value = _getEmotionForDay(_selectedDay!)!;
+        });
+      }
+      else {
+        if(mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to delete emotion.')),
+          );
+        }
+      }
+    } catch (e) {
+      logger.e("Delete error: $e");
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete emotion.')),
+        );
+      }
+    }
+  }
+
+  void _showEmotionDialog({Emotion? emotion}) {
+    if(emotion != null) {
+      _emotionTypeController.text = emotion.emotion;
+      _emotionContentController.text = emotion.content!;
+    }
+
+    showDialog(
+      context: context, 
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          scrollable: true,
+          title: Text(emotion == null ? "Add Daily Emotion" : "Edit Daily Emotion"),
+          content: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              children: [
+                DropdownMenu<EmotionTypes>(
+                  initialSelection: EmotionTypes.neutral,
+                  controller: _emotionTypeController,
+                  label: const Text('Emotion'),
+                  dropdownMenuEntries: EmotionTypes.emotionTypeEntries,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => _submitEmotion(id: emotion?.id), 
+              child: Text(emotion == null ? "Submit" : "Save Changes")
+            )
+          ],
+        )
+      )
+    );
   }
 
   void _showEventDialog({Event? event}) {
@@ -202,6 +370,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     );
                     if(date != null) {
                       final time = await showTimePicker(
+                        // ignore: use_build_context_synchronously
                         context: context,
                         initialTime: _startDateTime != null ? TimeOfDay.fromDateTime(_startDateTime!) : TimeOfDay.now(),
                       );
@@ -222,6 +391,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     );
                     if(date != null) {
                       final time = await showTimePicker(
+                        // ignore: use_build_context_synchronously
                         context: context,
                         initialTime: _endDateTime != null ? TimeOfDay.fromDateTime(_endDateTime!) : TimeOfDay.now(),
                       );
@@ -267,6 +437,12 @@ class _CalendarPageState extends State<CalendarPage> {
         ),
       ),
     );
+  }
+
+  _emotionEdit() {
+    if(mounted) {
+      
+    }
   }
 
   @override
@@ -322,6 +498,45 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             onPageChanged: (focusedDay) => _focusedDay = focusedDay,
           ),
+          const SizedBox(height: 8),
+          Card(
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: ListTile(
+                onTap: () => _emotionEdit(),
+                
+              ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ValueListenableBuilder<Emotion>(
+              valueListenable: _selectedEmotion, 
+              builder: (context, value, _) => ListView.builder(
+                itemCount: 1,
+                itemBuilder: (context, index) {
+                  final emotion = value;
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    child: ListTile(
+                      title: Text('Emotion'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(emotion.content ?? 'Neutral'),
+                        ],
+                      ),
+                      trailing: Wrap(
+                        spacing: 8,
+                        children: [
+                          IconButton(icon: const Icon(Icons.edit), onPressed: () => _showEmotionDialog(emotion: emotion)),
+                          IconButton(icon: const Icon(Icons.delete), onPressed: () => _deleteEmotion(emotion)),                          
+                        ],
+                      ),
+                    )
+                  );
+                }
+                )
+              )
+            ),
           const SizedBox(height: 8),
           Expanded(
             child: ValueListenableBuilder<List<Event>>(
