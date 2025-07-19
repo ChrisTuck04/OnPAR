@@ -296,7 +296,7 @@ router.post("/read-user", authenticateToken, async (req, res) => {
       _id: userId
     });
 
-    res.status(200).json({ message: "User retrieved successfully", firstName: user.firstName, lastName: user.lastName });
+    res.status(200).json({ message: "User retrieved successfully", firstName: user.firstName, lastName: user.lastName, _id: user._id});
 
     
   }

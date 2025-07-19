@@ -1,10 +1,14 @@
 import {useState, useEffect, useRef, useCallback, KeyboardEvent} from "react"
 import {motion} from "framer-motion"
 // @ts-expect-error events interface import
-import type { Events } from "../types/Events" 
+import type { Events } from "../types/Events"
+// @ts-expect-error events interface import 
+import { getUser } from "../../api/auth"
+import type { AxiosError } from "axios"
+// @ts-expect-error events interface import
+import { createEvents } from "../../api/events"
 
 interface Props {
-  addEvent? : (e : React.FormEvent<HTMLFormElement>) => void
   exitEventForm? : (e : React.MouseEvent<HTMLButtonElement>) => void
   setColorName? : (currColor : string) => void
   color? : number
@@ -36,7 +40,7 @@ const isValidMMDDFormat = (date : string) : boolean => {
     
   }
 
-const EventForm = ({addEvent, exitEventForm} : Props) => {
+const EventForm = ({exitEventForm} : Props) => {
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null) 
   //const [events, setEvents] = useState<Events[]>([])
@@ -149,7 +153,7 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
     const [month, day] = date.split("-") 
     const [hour, min] = time.split(":")
 
-    const fullDateString = `${currentYear}-${month.padStart(2,'0')}-${day.padStart(2,'0')}T${hour.padStart(2,'0')}:${min.padStart(2,'0')}:00}`
+    const fullDateString = `${currentYear}-${month.padStart(2,'0')}-${day.padStart(2,'0')}T${hour.padStart(2,'0')}:${min.padStart(2,'0')}:00`
     const parsedDate = new Date(fullDateString)
 
     if(isNaN(parsedDate.getTime())) {
@@ -238,12 +242,58 @@ const EventForm = ({addEvent, exitEventForm} : Props) => {
     }
   }, [combineRecurEndDateWithManualTime])
 
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const user = await getUser(); // Call your API to get user data
+        if (user && user._id) { // Assuming 'user.id' contains the userId
+          setEvent((prevEvent: Events) => ({
+            ...prevEvent,
+            userId: user._id
+          }));
+        } else {
+          console.warn("User ID not found from API. Event might be created without a userId.");
+        }
+      } catch (err: unknown) {
+        const error = err as AxiosError<{error : string}>;
+        console.error("Failed to fetch userId:", error.response?.data?.error || "Unknown error");
+        // Handle API error (e.g., alert user, redirect)
+      }
+    };
+
+    fetchUserId();
+  }, []); // Empty dependency array
+
+  const createNewEvent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Prevent default form submission behavior
+
+    try {
+      // Basic validation (you might want more comprehensive validation)
+      if (!event.title || !event.content || !event.userId) {
+        alert("Please fill in all required fields (Title, Description, and ensure user is logged in).");
+        return;
+      }
+
+      console.log("Submitting event:", event); // For debugging
+      const response = await createEvents(event); // Pass the entire event object
+      console.log("Event created successfully:", response);
+      alert("Event created successfully!");
+      // Optional: Reset form or redirect
+      // setEvent(initialEventState); // If you have an initial state constant
+      // exitEventForm(e as unknown as React.MouseEvent<HTMLButtonElement>); // Assuming exitEventForm exists and closes the form
+    } catch (err: unknown) {
+      const error = err as AxiosError<{error : string}>;
+      console.error("Error creating event:", error.response?.data?.error || "Unknown error occurred.");
+      alert(`Failed to create event: ${error.response?.data?.error || "Please try again."}`);
+    }
+  };
+
 
   return (
     <div className="h-full flex flex-col items-center w-[300px] bg-[#F9F3EF] border-[4px] border-[#D2C1B6] gap-4 font-fredoka text-[25px] rounded-tr-3xl rounded-br-3xl"
          style={{WebkitTextStroke:"1px #D2C1B6"}}>
       
-      <form className="flex flex-col items-center mt-4 gap-4" onSubmit={addEvent}>
+      <form className="flex flex-col items-center mt-4 gap-4" onSubmit={createNewEvent}>
         <input
         className="placeholder-black w-[280px] text-[20px] text-black font-fredoka p-2 bg-[#D2C1B6] rounded-xl"
         type="text"

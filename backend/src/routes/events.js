@@ -3,6 +3,7 @@ const Events = require("../models/Events");
 const User = require("../models/User");
 const { authenticateToken } = require("./auth");
 
+
 const router = express.Router();
 
 // Create Event API

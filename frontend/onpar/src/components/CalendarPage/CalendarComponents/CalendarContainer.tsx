@@ -59,7 +59,6 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
     <div className="flex row w-screen h-screen bg-[#F9F3EF]">
 
         {eventForm && <EventForm
-          addEvent={() => "MAKE FUNCTION"}
           exitEventForm={CalendarMenuVisibility}/>}
 
 				{calendarMenu && <CalendarMenu 
