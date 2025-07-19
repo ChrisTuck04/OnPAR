@@ -7,7 +7,7 @@ const router = express.Router();
 // Create Emotion API
 router.post("/create-emotion", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { emotion, content } = req.body;
+  const { emotion, content, title } = req.body;
 
   if (!emotion) {
     return res.status(400).json({ error: "Emotion is required." });
@@ -17,7 +17,8 @@ router.post("/create-emotion", authenticateToken, async (req, res) => {
     const newEmotion = new Emotions({
       emotion,
       content: content || "",
-      userId: userId
+      userId: userId,
+      title: title
     });
 
     await newEmotion.save();
