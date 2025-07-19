@@ -29,7 +29,12 @@ const DropdownMenu = ({CardVisibility, CalendarVisibility, ReflectionVisibility,
             </div>
 
             <div className="font-fredoka z-20" style={{WebkitTextStroke: "1px #FFAA00"}}>
-                <button className="w-[193px] h-[52px] hover:bg-onparOrange border-[3px] border-onparOrange bg-onparLightYellow rounded-2xl p-5 text-l" onClick={ReflectionVisibility}>
+                <button
+                className="w-[193px] h-[52px] hover:bg-onparOrange border-[3px] border-onparOrange bg-onparLightYellow rounded-2xl p-5 text-l"
+                onClick={(e) => {
+                ReflectionVisibility(e)
+                CloseDropdownMenu(e)
+                }}>
                     <span className="relative bottom-[6px]">Reflection</span>
                 </button>
             </div>

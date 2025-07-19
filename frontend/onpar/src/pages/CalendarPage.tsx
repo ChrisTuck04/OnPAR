@@ -9,12 +9,7 @@ import AngryTheme from '../components/CalendarPage/AngryComponents/AngryTheme.ts
 import DropdownMenu from '../components/CalendarPage/DropdownMenuComponents/DropdownMenu.tsx';
 import DropdownButton from '../components/CalendarPage/DropdownMenuComponents/DropdownButton.tsx';
 import { useState, useEffect } from 'react';
-//import dayjs from "dayjs";
-//import type { User } from "../types/User"
-//import type { Emotions } from "../types/Emotions.ts";
-
-//import { createEmotion, readEmotion, updateEmotions,deleteEmotion } from "../api/emotions"
-
+import {motion, AnimatePresence} from "framer-motion"
 // @ts-expect-error axios functions in js
 import { getUser } from "../api/auth"
 import type { AxiosError } from "axios";
@@ -29,16 +24,8 @@ const CalendarPage = () => {
   const [angryTheme, setAngryTheme] = useState(false);
   const [dropdownMenu, setDropdownMenu] = useState(false)
   const [menuButton, setMenuButton] = useState(false)
-
-  /*these are the useStates for user object, all
-   emotions of the user per day they logged it,
-   and events list that holds all the events the
-   user made. Will need to parse the events list
-   even further when adding events to the */
-
-  //const [emotions, setEmotions] = useState<Emotions[]>([])
-
   const [userName, setUserName] = useState("")
+  const [openJournal, setOpenJournal] = useState<boolean>(false)
 
   const CardVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
     if(emotionCard === true)
@@ -132,6 +119,19 @@ const CalendarPage = () => {
     fetchUserName()
   }, [])
 
+  // Log the state whenever it changes
+    useEffect(() => {
+    console.log("EmotionCard: openJournal state is now:", openJournal);
+    }, [openJournal]);
+  
+    const toggleJournalVisibility = (e : React.MouseEvent<HTMLButtonElement>) => {
+      setOpenJournal((prevOpenJournal) => {
+        console.log("toggleJournalVisibility: Toggling from", prevOpenJournal, "to", !prevOpenJournal)
+        return !prevOpenJournal
+      })
+      e.stopPropagation()
+    }
+
   return (
       <div className="min-h-screen flex items-center justify-center">
 
@@ -146,15 +146,30 @@ const CalendarPage = () => {
         </div>
 
         <div className="fixed snap-center z-40">
-          {emotionCard && <EmotionCard Happy={Happy} Pleasant={Pleasant} Sad={Sad} Angry={Angry}/>}
+          {emotionCard && 
+          <EmotionCard 
+          Happy={Happy}
+          Pleasant={Pleasant}
+          Sad={Sad} 
+          Angry={Angry}
+          toggleJournalView={toggleJournalVisibility}
+          journalValid={openJournal}/>}
         </div>
+
+        <AnimatePresence>
+					{openJournal &&
+          <Journal
+          onCloseJournal={toggleJournalVisibility}
+          openMenuButton={() => setMenuButton(true)}
+          />}
+				</AnimatePresence>
 
         <div>
           {menuButton && <DropdownButton OpenDropdownMenu={OpenDropdownMenu}/>}
           {dropdownMenu && <DropdownMenu 
           CardVisibility={CardVisibility} 
           CalendarVisibility={CalendarVisibility} 
-          ReflectionVisibility={()=> null} 
+          ReflectionVisibility={toggleJournalVisibility} 
           FriendsListVisibility={()=> null}
           CloseDropdownMenu={CloseDropdownMenu}/>}
         </div>
@@ -193,17 +208,71 @@ const DateTimeHeader = () => {
 }
 */
 
-interface Props {
+interface WelcomeHeaderProps {
   name: string
 }
 
-const WelcomeHeader = ({name} : Props) => {
+const WelcomeHeader = ({name} : WelcomeHeaderProps) => {
   return (
     <div className="fixed flex flex-col items-center w-full h-full top-[100px] text-white font-fredoka text-[65px] z-[25]"
           style={{WebkitTextStroke: "1px #D2C1B6"}}>
       <p className="flex items-center justify-center w-[800px] h-[100px]">Welcome {name}!</p>
     </div>
   )
+}
+
+interface JournalProps {
+  onCloseJournal: (e : React.MouseEvent<HTMLButtonElement>) => void;
+  openDropdownMenu? : () => void
+  openMenuButton : () => void
+}
+
+const Journal = ({ onCloseJournal}: JournalProps) => {
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  return (
+    <motion.div
+      initial={{ scaleX: 0 }}
+      animate={{ scaleX: 1 }}
+      exit={{ scaleX: 0 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50"
+    >
+      <motion.div
+        className="flex w-[700px] h-[400px] bg-white rounded-[40px] shadow-xl origin-left overflow-hidden"
+      >
+        {/* Left Page */}
+        <div className="w-1/2 p-6 border-r-2 border-gray-300 bg-onparLightYellow font-fredoka">
+          <input
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full text-2xl font-bold bg-transparent border-b-2 border-gray-400 focus:outline-none placeholder-gray-500"
+          />
+          <textarea
+            placeholder="Write your thoughts..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="mt-4 w-full h-64 bg-transparent resize-none focus:outline-none text-lg"
+          />
+        </div>
+
+        {/* Right Page */}
+        <div className="w-1/2 p-6 flex items-start justify-end bg-onparLightYellow">
+          <button
+            onClick={(e) => {
+              onCloseJournal(e)
+              }}
+            className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 }
 
 export default CalendarPage

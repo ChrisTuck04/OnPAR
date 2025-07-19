@@ -29,7 +29,8 @@ router.post("/create-emotion", authenticateToken, async (req, res) => {
         emotion: newEmotion.emotion,
         content: newEmotion.content,
         createdAt: newEmotion.createdAt,
-        userId: newEmotion.userId
+        userId: newEmotion.userId,
+        title: newEmotion.title
       }
     });
   } catch (error) {
@@ -72,7 +73,7 @@ router.post("/read-emotions", authenticateToken, async (req, res) => {
 // Update Emotion API
 router.post("/update-emotion", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { emotionId, emotion, content } = req.body;
+  const { emotionId, emotion, content, title } = req.body;
 
   if (!emotionId) {
     return res.status(400).json({ error: "emotionId is required." });
@@ -93,6 +94,10 @@ router.post("/update-emotion", authenticateToken, async (req, res) => {
     }
     if (content !== undefined) {
       emotionEntry.content = content;
+    }
+
+    if (title !== undefined) {
+      emotionEntry.title = title
     }
 
     await emotionEntry.save();
