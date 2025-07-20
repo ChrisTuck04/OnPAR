@@ -255,9 +255,6 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
   const [userId, setUserId] = useState("")
   const [sharedEmails, setSharedEmails] = useState<string[]>([])
 
-  //function to set sharedEmails must 
-  setSharedEmails([])
-
   // Refs for the textareas to measure their content height
   const leftTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const rightTextAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -282,25 +279,18 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
   useEffect(() => {
     if (leftTextAreaRef.current) {
       const textarea = leftTextAreaRef.current;
-      // We don't need to set height to 'auto' here if we rely on Tailwind's fixed height.
-      // The 'scrollHeight' will naturally reflect the content's height.
       
       // If scrollHeight is greater than clientHeight, content overflows
       if (textarea.scrollHeight > textarea.clientHeight) {
         alert("Left page limit reached! Cannot type further.");
         // Revert to the previous content that fit
         setLeftText(prevText => {
-          // This is a simple rollback. For more complex cases (e.g., pasting large text),
-          // you might need to find the exact fitting substring.
-          // For single character input, this effectively prevents the last char.
           return prevText; // `prevText` here is the content *before* the overflowing character was added.
         });
       }
-      // No need to set height back to clientHeight here, Tailwind's h-[540px] handles it.
     }
-  }, [leftText]); // Rerun this effect when leftText changes
+  }, [leftText]);
 
-  // --- Effect to enforce visual limit for right textarea ---
   useEffect(() => {
     if (rightTextAreaRef.current) {
       const textarea = rightTextAreaRef.current;
@@ -313,9 +303,9 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
           return prevText;
         });
       }
-      // No need to set height back to clientHeight here, Tailwind's h-[540px] handles it.
+
     }
-  }, [rightText]); // Rerun this effect when rightText changes
+  }, [rightText]);
 
   useEffect(() => {
     setEmotionIcon(currentEmotion)
