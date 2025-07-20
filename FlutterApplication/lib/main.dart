@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData appTheme = ThemeData(
-      primaryColor: const Color(0xFFFAE75F),
+      primaryColor: Colors.black,
       scaffoldBackgroundColor: const Color(0xFFC3F8FF),
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFFFAE75F),

@@ -126,15 +126,95 @@ class _CalendarPageState extends State<CalendarPage> {
     return emotions[dateKey];
   }
 
-  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
-    if (!isSameDay(_selectedDay, selectedDay)) {
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) async {
       setState(() {
         _selectedDay = selectedDay;
         _focusedDay = focusedDay;
       });
+      _selectedEvents.value = _getEventsForDay(selectedDay);
+
+      await _fetchEmotionForDay(selectedDay);
+  }
+
+  Future<void> _fetchEmotionForDay(DateTime day) async {
+    try {
+      final fetched = await _emotionService.fetchEmotions(day);
+      setState(() {
+        final key = DateTime.utc(day.year, day.month, day.day);
+        emotions.remove(key);
+
+        for(var emotion in fetched) {
+          final key = DateTime.utc(
+            emotion.createdAt.year,
+            emotion.createdAt.month,
+            emotion.createdAt.day,
+          );
+          emotions[key] = emotion;
+        }
+
+        _selectedEmotion.value = _getEmotionForDay(day);
+      });
+    } catch (e) {
+      logger.e("Error fetching emotion for selected day: $e");
     }
-    _selectedEvents.value = _getEventsForDay(selectedDay);
-    _selectedEmotion.value = _getEmotionForDay(selectedDay);
+  }
+
+  void _showEditEmotionDialog(BuildContext context, DateTime day) async {
+    final Emotion? currentEmotion = _getEmotionForDay(day);
+
+    if (currentEmotion == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No emotion to edit for this day.")),
+      );
+      return;
+    }
+
+    final TextEditingController controller = TextEditingController(text: currentEmotion.emotion);
+
+    final String? newEmotionString = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Edit Emotion for ${day.toLocal().toString().split(' ')[0]}"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: "New Emotion"),
+        ),
+        actions: [
+          TextButton(
+            child: const Text("Cancel"),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            child: const Text("Save"),
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+          ),
+        ],
+      ),
+    );
+
+    if (newEmotionString != null && newEmotionString.isNotEmpty) {
+      final emotionToUpdate = Emotion(
+        id: currentEmotion.id,
+        emotion: newEmotionString,
+        title: currentEmotion.title,
+        leftContent: currentEmotion.leftContent,
+        rightContent: currentEmotion.rightContent,
+        uID: currentEmotion.uID,
+        createdAt: currentEmotion.createdAt,
+      );
+
+      final success = await _emotionService.updateEmotion(emotionToUpdate);
+
+      if (success) {
+        await _fetchEmotionForDay(day);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to update emotion.")),
+          );
+        }
+      }
+    }
   }
 
   Future<void> _fetchEvents() async {
@@ -376,7 +456,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                   child: TextField(
                                     controller: _emotionLeftContentController,
                                     decoration: const InputDecoration(
-                                      labelText: "What's Good?",
+                                      labelText: "Good?",
                                       border: OutlineInputBorder(),
                                     ),
                                     maxLines: 4,
@@ -387,7 +467,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                   child: TextField(
                                     controller: _emotionRightContentController,
                                     decoration: const InputDecoration(
-                                      labelText: "What to Improve?",
+                                      labelText: "Bad?",
                                       border: OutlineInputBorder(),
                                     ),
                                     maxLines: 4,
@@ -656,15 +736,24 @@ class _CalendarPageState extends State<CalendarPage> {
                       if (emotion.rightContent?.isNotEmpty ?? false)
                         Padding(
                           padding: const EdgeInsets.only(top: 2.0),
-                          child: Text("🤔 Improve: ${emotion.rightContent!}"),
+                          child: Text("🤔 Bad: ${emotion.rightContent!}"),
                         ),
                     ],
                   ),
                   isThreeLine: true,
                   onTap: () => _showEmotionDialog(emotion: emotion),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    onPressed: () => _deleteEmotion(emotion),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _deleteEmotion(emotion),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _showEmotionDialog(emotion: emotion),
+                      ),
+                    ],
                   ),
                 ),
               );

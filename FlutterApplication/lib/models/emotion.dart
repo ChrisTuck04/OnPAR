@@ -41,6 +41,7 @@ class Emotion {
   Map<String, dynamic> toJson() {
     return {
       'emotion': emotion,
+      'title': title,
       'leftContent': leftContent,
       'rightContent': rightContent,
       'userId': uID,

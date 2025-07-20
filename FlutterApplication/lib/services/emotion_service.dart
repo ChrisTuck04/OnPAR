@@ -19,11 +19,15 @@ class EmotionService {
 
     Future<bool> createEmotion(Emotion emotion) async {
         final response = await http.post(
-        Uri.parse('$emotionURL/create-emotion'),
-        headers: _headers,
-        body: jsonEncode(emotion.toJson()),
+            Uri.parse('$emotionURL/create-emotion'),
+            headers: _headers,
+            body: jsonEncode({
+                'emotion': emotion.emotion,
+                'title': emotion.title ?? '',
+                'leftContent': emotion.leftContent ?? '',
+                'rightContent': emotion.rightContent ?? '',
+            }),
         );
-
         logger.i('CreateEmotion status: ${response.statusCode}');
         logger.i('CreateEmotion response: ${response.body}');
 
@@ -71,15 +75,35 @@ class EmotionService {
     }
 
     Future<bool> updateEmotion(Emotion emotion) async {
-        final Map<String, dynamic> body = emotion.toJson();
-        body['emotionId'] = emotion.id;
+        if (emotion.id == null) {
+            logger.e("Error: Tried to update an emotion with a null ID.");
+            return false;
+        }
 
-        final response = await http.post(
-            Uri.parse('$emotionURL/update-emotion'),
-            headers: _headers,
-            body: jsonEncode(body),
-        );
-
-        return response.statusCode == 200;
+        try {
+            final response = await http.post(
+                Uri.parse('$emotionURL/update-emotion'),
+                headers: _headers,
+                body: jsonEncode({
+                    'emotionId': emotion.id,
+                    'emotion': emotion.emotion,
+                    'title': emotion.title ?? '',
+                    'leftContent': emotion.leftContent ?? '',
+                    'rightContent': emotion.rightContent ?? '',
+                }),
+            );
+            if (response.statusCode == 200) {
+                logger.i("Emotion updated successfully");
+                return true;
+            }
+            if (response.statusCode != 200) {
+                logger.e("Failed to update emotion: ${response.body}");
+                return false;
+            }
+        } catch (e) {
+            logger.e("Error updating emotion: $e");
+            return false;
+        }
+        return false;
     }
 }
