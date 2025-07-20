@@ -6,18 +6,14 @@ const router = express.Router();
 
 // Create Emotion API
 router.post("/create-emotion", authenticateToken, async (req, res) => {
-  console.log("flag -1")
   const userId = req.user.id;
-  console.log("flag -2")
-  const { emotion, title, leftContent, rightContent, sharedEmails } = req.body;
-  console.log("flag -3")
+  const { emotion, title, leftContent, rightContent } = req.body;
 
   if (!emotion) {
     return res.status(400).json({ error: "Emotion is required." });
   }
 
   try {
-    console.log("flag 0")
     const newEmotion = new Emotion({
       emotion,
       leftContent: leftContent || "",
@@ -26,9 +22,7 @@ router.post("/create-emotion", authenticateToken, async (req, res) => {
       title: title
     });
 
-    console.log("flag 1")
     await newEmotion.save();
-    console.log("flag 2")
 
     res.status(201).json({ 
       message: "Emotion logged successfully", 
