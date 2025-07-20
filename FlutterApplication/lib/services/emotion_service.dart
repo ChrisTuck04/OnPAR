@@ -31,21 +31,31 @@ class EmotionService {
     }
 
     Future<List<Emotion>> fetchEmotions(DateTime day) async {
+        final DateTime startDate = DateTime(day.year, day.month, day.day);
+        final DateTime endDate = DateTime(day.year, day.month, day.day, 23, 59, 59);
+
         final response = await http.post(
             Uri.parse('$emotionURL/read-emotions'),
             headers: _headers,
             body: jsonEncode({
-                'createdAt': day.toIso8601String(),
+                'startDate': startDate.toIso8601String(),
+                'endDate': endDate.toIso8601String(),
             }),
         );
 
         if (response.statusCode == 200) {
+            print("--- RAW JSON RESPONSE FROM SERVER ---");
+            print(response.body);
             final data = jsonDecode(response.body);
-            final List<Emotion> emotions = (data['emotions'] as List)
-                .map((e) => Emotion.fromJson(e))
-                .toList();
-            return emotions;
+            if (data['emotions'] != null && data['emotions'] is List) {
+                final List<Emotion> emotions = (data['emotions'] as List)
+                    .map((e) => Emotion.fromJson(e))
+                    .toList();
+                return emotions;
+            }
+            return [];
         } else {
+            logger.e('Failed to fetch Emotions: ${response.statusCode} ${response.body}');
             throw Exception('Failed to fetch Emotions');
         }
     }
@@ -61,13 +71,13 @@ class EmotionService {
     }
 
     Future<bool> updateEmotion(Emotion emotion) async {
+        final Map<String, dynamic> body = emotion.toJson();
+        body['emotionId'] = emotion.id;
+
         final response = await http.post(
             Uri.parse('$emotionURL/update-emotion'),
             headers: _headers,
-            body: jsonEncode({
-                'emotionId': emotion.id,
-                ...emotion.toJson(),
-            }),
+            body: jsonEncode(body),
         );
 
         return response.statusCode == 200;

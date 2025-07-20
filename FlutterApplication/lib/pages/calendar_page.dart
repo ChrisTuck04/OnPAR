@@ -32,7 +32,7 @@ enum EmotionTypes {
         value: emotionType,
         label: emotionType.label,
       ),
-    )
+    ).toList()
   );
 }
 
@@ -57,9 +57,11 @@ class _CalendarPageState extends State<CalendarPage> {
   Map<DateTime, List<Event>> events = {};
   late final ValueNotifier<List<Event>> _selectedEvents;
   Map<DateTime, Emotion?> emotions = {};
-  late final ValueNotifier<Emotion> _selectedEmotion;
+  late final ValueNotifier<Emotion?> _selectedEmotion;
   final TextEditingController _emotionTypeController = TextEditingController();
-  final TextEditingController _emotionContentController = TextEditingController();
+  final TextEditingController _emotionTitleController = TextEditingController();
+  final TextEditingController _emotionLeftContentController = TextEditingController();
+  final TextEditingController _emotionRightContentController = TextEditingController();
   final TextEditingController _eventNameController = TextEditingController();
   final TextEditingController _eventContentController = TextEditingController();
   DateTime? _startDateTime;
@@ -69,16 +71,18 @@ class _CalendarPageState extends State<CalendarPage> {
     'Sun': false, 'Mon': false, 'Tue': false, 'Wed': false,
     'Thu': false, 'Fri': false, 'Sat': false,
   };
+  EmotionTypes? _selectedEmotionType = EmotionTypes.neutral;
 
 
   @override
   void initState() {
     super.initState();
+    userIdent = widget.uid;
     _selectedDay = _focusedDay;
     _eventService = EventService(widget.token);
     _emotionService = EmotionService(widget.token);
     _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
-    _selectedEmotion = ValueNotifier(_getEmotionForDay(_selectedDay!)!);
+    _selectedEmotion = ValueNotifier(_getEmotionForDay(_selectedDay!));
     _fetchEvents();
     _fetchEmotions();
   }
@@ -86,6 +90,13 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   void dispose() {
     _selectedEvents.dispose();
+    _selectedEmotion.dispose();
+    _emotionTypeController.dispose();
+    _emotionTitleController.dispose();
+    _emotionLeftContentController.dispose();
+    _emotionRightContentController.dispose();
+    _eventNameController.dispose();
+    _eventContentController.dispose();
     super.dispose();
   }
 
@@ -93,10 +104,14 @@ class _CalendarPageState extends State<CalendarPage> {
     final dateKey = DateTime.utc(day.year, day.month, day.day);
     List<Event> dailyEvents = events[dateKey] ?? [];
 
-    for(var entry in events.entries) {
-      for(var event in entry.value) {
-        if(event.recurring && event.recurDays != null && event.recurDays!.contains(day.weekday%7) && day.isAfter(event.startTime.subtract(const Duration(days: 1))) && (event.recurEnd == null || day.isBefore(event.recurEnd!.add(const Duration(days: 1))))) {
-          if(!dailyEvents.contains(event)) {
+    for (var entry in events.entries) {
+      for (var event in entry.value) {
+        if (event.recurring && event.recurDays != null &&
+            event.recurDays!.contains(day.weekday % 7) &&
+            day.isAfter(event.startTime.subtract(const Duration(days: 1))) &&
+            (event.recurEnd == null ||
+                day.isBefore(event.recurEnd!.add(const Duration(days: 1))))) {
+          if (!dailyEvents.any((e) => e.id == event.id)) {
             dailyEvents.add(event);
           }
         }
@@ -119,7 +134,7 @@ class _CalendarPageState extends State<CalendarPage> {
       });
     }
     _selectedEvents.value = _getEventsForDay(selectedDay);
-    _selectedEmotion.value = _getEmotionForDay(selectedDay)!;
+    _selectedEmotion.value = _getEmotionForDay(selectedDay);
   }
 
   Future<void> _fetchEvents() async {
@@ -130,10 +145,11 @@ class _CalendarPageState extends State<CalendarPage> {
       setState(() {
         events.clear();
         for (var event in fetched) {
-          final key = DateTime.utc(event.startTime.year, event.startTime.month, event.startTime.day);
+          final key = DateTime.utc(
+              event.startTime.year, event.startTime.month, event.startTime.day);
           events.putIfAbsent(key, () => []);
 
-          if(!events[key]!.any((e) => e.id == event.id)) {
+          if (!events[key]!.any((e) => e.id == event.id)) {
             events[key]!.add(event);
           }
         }
@@ -147,18 +163,17 @@ class _CalendarPageState extends State<CalendarPage> {
   Future<void> _fetchEmotions() async {
     try {
       final day = _selectedDay;
-      final fetched = await _emotionService.fetchEmotions(day!);
+      if (day == null) return;
+      final fetched = await _emotionService.fetchEmotions(day);
       setState(() {
         emotions.clear();
-        for(var emotion in fetched) {
-          final key = DateTime.utc(emotion.createdAt.year, emotion.createdAt.month, emotion.createdAt.day);
-          emotions.putIfAbsent(key, () => Emotion(emotion: 'Neutral', createdAt: day));
-
-          if(emotions[key]!.id != emotion.id) {
-            emotions[key] = emotion;
-          }
+        for (var emotion in fetched) {
+          final key = DateTime.utc(
+              emotion.createdAt.year, emotion.createdAt.month,
+              emotion.createdAt.day);
+          emotions[key] = emotion;
         }
-        _selectedEmotion.value = _getEmotionForDay(_selectedDay!)!;
+        _selectedEmotion.value = _getEmotionForDay(_selectedDay!);
       });
     } catch (e) {
       logger.e("Error fetching emotions: $e");
@@ -166,11 +181,12 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   void _submitEvent({String? id}) async {
-    if(_startDateTime == null || _endDateTime == null) return;
+    if (_startDateTime == null || _endDateTime == null) return;
 
     final recurDays = _recurringDays.entries
         .where((e) => e.value)
-        .map((e) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(e.key))
+        .map((e) =>
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(e.key))
         .toList();
 
     final event = Event(
@@ -184,18 +200,22 @@ class _CalendarPageState extends State<CalendarPage> {
       recurEnd: _recurringEnd,
     );
 
-    final success = id == null ? await _eventService.createEvent(event) : await _eventService.updateEvent(event);
+    final success = id == null
+        ? await _eventService.createEvent(event)
+        : await _eventService.updateEvent(event);
 
-    if(success) {
+    if (success) {
       await _fetchEvents();
       _clearEventForm();
-      if(mounted) {
+      if (mounted) {
         Navigator.of(context).pop();
       }
     } else {
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(id == null ? 'Failed to create event.' : 'Failed to update event.')),
+          SnackBar(content: Text(id == null
+              ? 'Failed to create event.'
+              : 'Failed to update event.')),
         );
       }
     }
@@ -204,26 +224,31 @@ class _CalendarPageState extends State<CalendarPage> {
   void _submitEmotion({String? id}) async {
     final emotion = Emotion(
       id: id,
-      emotion: _emotionContentController.text, 
-      content: _emotionContentController.text,
+      emotion: _selectedEmotionType?.label ?? 'Neutral',
+      title: _emotionTitleController.text,
+      leftContent: _emotionLeftContentController.text,
+      rightContent: _emotionRightContentController.text,
       createdAt: _selectedDay ?? _focusedDay,
       uID: userIdent,
     );
 
-    final success = id == null ? await _emotionService.createEmotion(emotion) : await _emotionService.updateEmotion(emotion);
+    final success = id == null
+        ? await _emotionService.createEmotion(emotion)
+        : await _emotionService.updateEmotion(emotion);
 
-    if(success) {
+    if (success) {
       await _fetchEmotions();
       _clearEmotionForm();
-      if(mounted) {
+      if (mounted) {
         Navigator.of(context).pop();
       }
-      else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(id == null ? 'Failed to create emotion.' : 'Failed to update emotion.')),
-          );
-        }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(id == null
+              ? 'Failed to create emotion.'
+              : 'Failed to update emotion.')),
+        );
       }
     }
   }
@@ -238,21 +263,20 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   void _clearEmotionForm() {
-    _emotionContentController.clear();
+    _emotionTitleController.clear();
+    _emotionLeftContentController.clear();
+    _emotionRightContentController.clear();
     _emotionTypeController.clear();
   }
 
   void _deleteEvent(Event event) async {
-    if(event.id == null) return;
+    if (event.id == null) return;
     try {
       bool success = await _eventService.deleteEvent(event.id!);
-      if(success) {
+      if (success) {
         await _fetchEvents();
-        setState(() {
-          _selectedEvents.value = _getEventsForDay(_selectedDay!);
-        });
       } else {
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to delete event.')),
           );
@@ -260,7 +284,7 @@ class _CalendarPageState extends State<CalendarPage> {
       }
     } catch (e) {
       logger.e("Delete error: $e");
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to delete event.')),
         );
@@ -269,17 +293,14 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   void _deleteEmotion(Emotion emotion) async {
-    if(emotion.id == null) return;
+    if (emotion.id == null) return;
     try {
       bool success = await _emotionService.deleteEmotion(emotion.id!);
-      if(success) {
+      if (success) {
         await _fetchEmotions();
-        setState(() {
-          _selectedEmotion.value = _getEmotionForDay(_selectedDay!)!;
-        });
       }
       else {
-        if(mounted) {
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Failed to delete emotion.')),
           );
@@ -287,7 +308,7 @@ class _CalendarPageState extends State<CalendarPage> {
       }
     } catch (e) {
       logger.e("Delete error: $e");
-      if(mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to delete emotion.')),
         );
@@ -296,153 +317,246 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   void _showEmotionDialog({Emotion? emotion}) {
-    if(emotion != null) {
-      _emotionTypeController.text = emotion.emotion;
-      _emotionContentController.text = emotion.content!;
+    if (emotion != null) {
+      // Populate controllers if editing an existing emotion
+      _selectedEmotionType = EmotionTypes.values.firstWhere(
+              (e) => e.label == emotion.emotion,
+          orElse: () => EmotionTypes.neutral
+      );
+      _emotionTitleController.text = emotion.title ?? '';
+      _emotionLeftContentController.text = emotion.leftContent ?? '';
+      _emotionRightContentController.text = emotion.rightContent ?? '';
+    } else {
+      // Clear controllers if adding a new emotion
+      _selectedEmotionType = EmotionTypes.neutral;
+      _clearEmotionForm();
     }
 
     showDialog(
-      context: context, 
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          scrollable: true,
-          title: Text(emotion == null ? "Add Daily Emotion" : "Edit Daily Emotion"),
-          content: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              children: [
-                DropdownMenu<EmotionTypes>(
-                  initialSelection: EmotionTypes.neutral,
-                  controller: _emotionTypeController,
-                  label: const Text('Emotion'),
-                  dropdownMenuEntries: EmotionTypes.emotionTypeEntries,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => _submitEmotion(id: emotion?.id), 
-              child: Text(emotion == null ? "Submit" : "Save Changes")
+        context: context,
+        builder: (context) =>
+            StatefulBuilder(
+                builder: (context, setState) =>
+                    AlertDialog(
+                      scrollable: true,
+                      title: Text(emotion == null
+                          ? "Add Daily Reflection"
+                          : "Edit Daily Reflection"),
+                      content: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            DropdownMenu<EmotionTypes>(
+                              initialSelection: _selectedEmotionType,
+                              controller: _emotionTypeController,
+                              onSelected: (EmotionTypes? selected) {
+                                setState(() {
+                                  _selectedEmotionType =
+                                      selected ?? EmotionTypes.neutral;
+                                });
+                              },
+                              dropdownMenuEntries: EmotionTypes.emotionTypeEntries,
+                            ),
+                            const SizedBox(height: 16),
+
+                            TextField(
+                              controller: _emotionTitleController,
+                              decoration: const InputDecoration(
+                                labelText: "Title",
+                                hintText: "Title for your reflection",
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _emotionLeftContentController,
+                                    decoration: const InputDecoration(
+                                      labelText: "What's Good?",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    maxLines: 4,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _emotionRightContentController,
+                                    decoration: const InputDecoration(
+                                      labelText: "What to Improve?",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    maxLines: 4,
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.of(context).pop(),
+                            child: const Text("Cancel")),
+                        ElevatedButton(
+                            onPressed: () => _submitEmotion(id: emotion?.id),
+                            child: Text(
+                                emotion == null ? "Submit" : "Save Changes")
+                        )
+                      ],
+                    )
             )
-          ],
-        )
-      )
-    );
+    ).then((_) => _clearEmotionForm());
   }
 
   void _showEventDialog({Event? event}) {
-    if(event != null) {
+    if (event != null) {
       _eventNameController.text = event.title;
       _eventContentController.text = event.content;
       _startDateTime = event.startTime;
       _endDateTime = event.endTime;
       _recurringEnd = event.recurEnd;
       _recurringDays.updateAll((key, _) => false);
-      if(event.recurDays != null) {
-        for(var index in event.recurDays!) {
-          _recurringDays[['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index]] = true;
+      if (event.recurDays != null) {
+        for (var index in event.recurDays!) {
+          _recurringDays[[
+            'Sun',
+            'Mon',
+            'Tue',
+            'Wed',
+            'Thu',
+            'Fri',
+            'Sat'
+          ][index]] = true;
         }
       }
+    } else {
+      _clearEventForm();
     }
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          scrollable: true,
-          title: Text(event == null ? "Add Event" : "Edit Event"),
-          content: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              children: [
-                TextField(controller: _eventNameController, decoration: const InputDecoration(hintText: 'Event Name')),
-                TextField(controller: _eventContentController, decoration: const InputDecoration(hintText: 'Event Description')),
-                const SizedBox(height: 12),
-                ListTile(
-                  title: Text(_startDateTime != null ? 'Start: ${_startDateTime!.toLocal()}' : 'Pick Start Date & Time'),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _startDateTime ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if(date != null) {
-                      final time = await showTimePicker(
-                        // ignore: use_build_context_synchronously
-                        context: context,
-                        initialTime: _startDateTime != null ? TimeOfDay.fromDateTime(_startDateTime!) : TimeOfDay.now(),
-                      );
-                      if(time != null){
-                        setState(() => _startDateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute));
-                      }
-                    }
-                  },
+      builder: (context) =>
+          StatefulBuilder(
+            builder: (context, setState) =>
+                AlertDialog(
+                  scrollable: true,
+                  title: Text(event == null ? "Add Event" : "Edit Event"),
+                  content: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(controller: _eventNameController,
+                            decoration: const InputDecoration(
+                                hintText: 'Event Name')),
+                        TextField(controller: _eventContentController,
+                            decoration: const InputDecoration(
+                                hintText: 'Event Description')),
+                        const SizedBox(height: 12),
+                        ListTile(
+                          title: Text(
+                              _startDateTime != null ? 'Start: ${_startDateTime!
+                                  .toLocal()}' : 'Pick Start Date & Time'),
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: _startDateTime ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2100),
+                            );
+                            if (date != null) {
+                              final time = await showTimePicker(
+                                // ignore: use_build_context_synchronously
+                                context: context,
+                                initialTime: _startDateTime != null ? TimeOfDay
+                                    .fromDateTime(_startDateTime!) : TimeOfDay
+                                    .now(),
+                              );
+                              if (time != null) {
+                                setState(() =>
+                                _startDateTime = DateTime(
+                                    date.year, date.month, date.day, time.hour,
+                                    time.minute));
+                              }
+                            }
+                          },
+                        ),
+                        ListTile(
+                          title: Text(
+                              _endDateTime != null ? 'End: ${_endDateTime!
+                                  .toLocal()}' : 'Pick End Date & Time'),
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: _endDateTime ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2100),
+                            );
+                            if (date != null) {
+                              final time = await showTimePicker(
+                                // ignore: use_build_context_synchronously
+                                context: context,
+                                initialTime: _endDateTime != null ? TimeOfDay
+                                    .fromDateTime(_endDateTime!) : TimeOfDay
+                                    .now(),
+                              );
+                              if (time != null) {
+                                setState(() =>
+                                _endDateTime = DateTime(
+                                    date.year, date.month, date.day, time.hour,
+                                    time.minute));
+                              }
+                            }
+                          },
+                        ),
+                        Wrap(
+                          spacing: 6,
+                          children: _recurringDays.keys.map((day) {
+                            return FilterChip(
+                              label: Text(day),
+                              selected: _recurringDays[day]!,
+                              onSelected: (val) =>
+                                  setState(() => _recurringDays[day] = val),
+                            );
+                          }).toList(),
+                        ),
+                        ListTile(
+                          title: Text(_recurringEnd != null
+                              ? 'Recurrence Ends: ${_recurringEnd!.toLocal()}'
+                              : 'Pick Recurrence End Date'),
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: _recurringEnd ?? DateTime.now().add(
+                                  const Duration(days: 7)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2100),
+                            );
+                            if (date != null) {
+                              setState(() => _recurringEnd = date);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () => _submitEvent(id: event?.id),
+                      child: Text(event == null ? "Submit" : "Save Changes"),
+                    )
+                  ],
                 ),
-                ListTile(
-                  title: Text(_endDateTime != null ? 'End: ${_endDateTime!.toLocal()}' : 'Pick End Date & Time'),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _endDateTime ?? DateTime.now(),
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if(date != null) {
-                      final time = await showTimePicker(
-                        // ignore: use_build_context_synchronously
-                        context: context,
-                        initialTime: _endDateTime != null ? TimeOfDay.fromDateTime(_endDateTime!) : TimeOfDay.now(),
-                      );
-                      if(time != null) {
-                        setState(() => _endDateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute));
-                      }
-                    }
-                  },
-                ),
-                Wrap(
-                  spacing: 6,
-                  children: _recurringDays.keys.map((day) {
-                    return FilterChip(
-                      label: Text(day),
-                      selected: _recurringDays[day]!,
-                      onSelected: (val) => setState(() => _recurringDays[day] = val),
-                    );
-                  }).toList(),
-                ),
-                ListTile(
-                  title: Text(_recurringEnd != null ? 'Recurrence Ends: ${_recurringEnd!.toLocal()}' : 'Pick Recurrence End Date'),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _recurringEnd ?? DateTime.now().add(const Duration(days: 7)),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2100),
-                    );
-                    if(date != null) {
-                      setState(() => _recurringEnd = date);
-                    }
-                  },
-                ),
-              ],
-            ),
           ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => _submitEvent(id: event?.id),
-              child: Text(event == null ? "Submit" : "Save Changes"),
-            )
-          ],
-        ),
-      ),
     );
   }
 
-  _emotionEdit() {
-    if(mounted) {
-      
-    }
+  void _emotionEdit() {
+    _showEmotionDialog(emotion: _selectedEmotion.value);
   }
 
   @override
@@ -453,7 +567,9 @@ class _CalendarPageState extends State<CalendarPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginPage())),
+            onPressed: () =>
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (_) => const LoginPage())),
           ),
         ],
       ),
@@ -472,10 +588,15 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           TableCalendar<Event>(
             rowHeight: 50,
-            headerStyle: const HeaderStyle(formatButtonVisible: false, titleCentered: true),
+            headerStyle: const HeaderStyle(
+                formatButtonVisible: false, titleCentered: true),
             focusedDay: _focusedDay,
-            firstDay: DateTime.utc(DateTime.now().year - 8, 1, 1),
-            lastDay: DateTime.utc(DateTime.now().year + 8, 12, 12),
+            firstDay: DateTime.utc(DateTime
+                .now()
+                .year - 8, 1, 1),
+            lastDay: DateTime.utc(DateTime
+                .now()
+                .year + 8, 12, 12),
             calendarFormat: CalendarFormat.month,
             startingDayOfWeek: StartingDayOfWeek.sunday,
             onDaySelected: _onDaySelected,
@@ -499,81 +620,122 @@ class _CalendarPageState extends State<CalendarPage> {
             onPageChanged: (focusedDay) => _focusedDay = focusedDay,
           ),
           const SizedBox(height: 8),
-          Card(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              child: ListTile(
-                onTap: () => _emotionEdit(),
-                
-              ),
+          const Divider(),
+          ValueListenableBuilder<Emotion?>(
+            valueListenable: _selectedEmotion,
+            builder: (context, emotion, _) {
+              if (emotion == null) {
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                      vertical: 4, horizontal: 8),
+                  child: ListTile(
+                    title: const Text("No emotion recorded"),
+                    subtitle: const Text("Tap to add one for this day."),
+                    leading: const Icon(
+                        Icons.sentiment_neutral, color: Colors.grey),
+                    onTap: () => _showEmotionDialog(),
+                  ),
+                );
+              }
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                child: ListTile(
+                  title: Text(emotion.emotion),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (emotion.title?.isNotEmpty ?? false)
+                        Text(emotion.title!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+
+                      if (emotion.leftContent?.isNotEmpty ?? false)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text("✅ Good: ${emotion.leftContent!}"),
+                        ),
+
+                      if (emotion.rightContent?.isNotEmpty ?? false)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2.0),
+                          child: Text("🤔 Improve: ${emotion.rightContent!}"),
+                        ),
+                    ],
+                  ),
+                  isThreeLine: true,
+                  onTap: () => _showEmotionDialog(emotion: emotion),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () => _deleteEmotion(emotion),
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 8),
-          Expanded(
-            child: ValueListenableBuilder<Emotion>(
-              valueListenable: _selectedEmotion, 
-              builder: (context, value, _) => ListView.builder(
-                itemCount: 1,
-                itemBuilder: (context, index) {
-                  final emotion = value;
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    child: ListTile(
-                      title: Text('Emotion'),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(emotion.content ?? 'Neutral'),
-                        ],
-                      ),
-                      trailing: Wrap(
-                        spacing: 8,
-                        children: [
-                          IconButton(icon: const Icon(Icons.edit), onPressed: () => _showEmotionDialog(emotion: emotion)),
-                          IconButton(icon: const Icon(Icons.delete), onPressed: () => _deleteEmotion(emotion)),                          
-                        ],
-                      ),
-                    )
-                  );
-                }
-                )
-              )
-            ),
-          const SizedBox(height: 8),
+          Text("Events for this day", style: Theme
+              .of(context)
+              .textTheme
+              .titleMedium),
+          const Divider(),
           Expanded(
             child: ValueListenableBuilder<List<Event>>(
               valueListenable: _selectedEvents,
-              builder: (context, value, _) => ListView.builder(
+              builder: (context, value, _) {
+                if (value.isEmpty) {
+                  return const Center(child: Text("No events on this day."));
+                }
+                return ListView.builder(
                   itemCount: value.length,
                   itemBuilder: (context, index) {
                     final event = value[index];
                     return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 8),
                       child: ListTile(
                         title: Text(event.title),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(event.content),
-                            Text('From: ${DateFormat('hh:mm:ss').format(event.startTime.toLocal())}'),
-                            Text('To: ${DateFormat('hh:mm:ss').format(event.endTime.toLocal())}'),
+                            if (event.content.isNotEmpty) Text(event.content),
+                            Text('From: ${DateFormat('h:mm a').format(
+                                event.startTime.toLocal())}'),
+                            Text('To: ${DateFormat('h:mm a').format(
+                                event.endTime.toLocal())}'),
                             if (event.recurring)
-                              Text('Repeats on: ${event.recurDays?.map((d) => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}'),
+                              Text('Repeats on: ${event.recurDays?.map((d) =>
+                              [
+                                'Sun',
+                                'Mon',
+                                'Tue',
+                                'Wed',
+                                'Thu',
+                                'Fri',
+                                'Sat'
+                              ][d]).join(', ')}', style: TextStyle(color: Theme
+                                  .of(context)
+                                  .primaryColor, fontSize: 12)),
                             if (event.recurring && event.recurEnd != null)
-                              Text('Ends on: ${event.recurEnd!.toLocal()}'),
+                              Text('Ends on: ${DateFormat.yMd().format(
+                                  event.recurEnd!.toLocal())}',
+                                  style: const TextStyle(fontSize: 12)),
                           ],
                         ),
                         trailing: Wrap(
-                          spacing: 8,
+                          spacing: 0,
                           children: [
-                            IconButton(icon: const Icon(Icons.edit), onPressed: () => _showEventDialog(event: event)),
-                            IconButton(icon: const Icon(Icons.delete), onPressed: () => _deleteEvent(event)),
+                            IconButton(icon: const Icon(Icons.edit),
+                                onPressed: () =>
+                                    _showEventDialog(event: event)),
+                            IconButton(icon: const Icon(Icons.delete),
+                                onPressed: () => _deleteEvent(event)),
                           ],
                         ),
                       ),
                     );
                   },
-              ),
+                );
+              },
             ),
-          )
+          ),
         ],
       ),
     );

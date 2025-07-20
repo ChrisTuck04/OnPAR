@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'calendar_page.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -36,20 +37,33 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
+        print("--- RAW LOGIN RESPONSE ---");
+        print(response.body);
+        print("--------------------------");
         final data = jsonDecode(response.body);
 
-        if (data['token'] != null || !data['token'].isEmpty) {
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CalendarPage(token: data['token'], uid: data['_id']),
-              ),
-            );
+        final token = data['token'];
+        if (token != null && token is String && token.isNotEmpty) {
+          final decodedToken = JwtDecoder.decode(token);
+          final uid = decodedToken['id']; // or decodedToken['_id'] if that’s how you named it in the backend
+
+          if (uid != null && uid is String) {
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CalendarPage(token: token, uid: uid),
+                ),
+              );
+            }
+          } else {
+            setState(() {
+              _errorMessage = 'User ID not found in token.';
+            });
           }
         } else {
           setState(() {
-            _errorMessage = 'Please Register your account';
+            _errorMessage = 'Please register your account';
           });
         }
       } else {
