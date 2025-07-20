@@ -113,8 +113,7 @@ const CalendarPage = () => {
   const fetchUserName = async () => {
     try {
       const user = await getUser()
-      setUserId(user.id)
-      setUserName(user.firstName)
+      setUserId(user._id)
     } catch (err : unknown) {
       const error = err as AxiosError<{error : string}>
       alert(error.response?.data?.error || "retrieving user first name failed")
@@ -241,12 +240,12 @@ interface JournalProps {
 
 const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
   const [emotion, setEmotion] = useState<Emotions>({
+    title : "",
     emotion : "",
     leftContent : "",
     rightContent : "",
     userId : "",
     sharedEmails : [],
-    createdAt : new Date() 
   })
 
   const [emotionIcon, setEmotionIcon] = useState("")
@@ -335,12 +334,12 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
 
       const updatedEmotion : Emotions = {
         ...emotion,
+        title : title,
         emotion : emotionIcon,
         leftContent : leftText,
         rightContent : rightText,
         userId : userId,
         sharedEmails : sharedEmails,
-        createdAt : new Date()
       }
 
       setEmotion(updatedEmotion)
