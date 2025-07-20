@@ -361,7 +361,6 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
         leftContent : "",
         rightContent : "",
         sharedEmails : [],
-        createdAt : new Date()
       }))
 
       onCloseJournal(e)

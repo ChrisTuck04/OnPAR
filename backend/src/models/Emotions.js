@@ -5,7 +5,7 @@ const emotionSchema = new mongoose.Schema({
   title : {type : String, required : true, trim : true, default : ""},
   leftContent: { type: String, trim: true, default: "" },
   rightContent: { type: String, trim: true, default: "" },
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
+  userId: { type: mongoose.Schema.Types.ObjectId},
   sharedEmails: { type: [String], default: [] },
   createdAt: { type: Date, default: Date.now }
 });
