@@ -55,12 +55,19 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
     }
   }
 
+  const exitEventForm = (e : React.FormEvent<HTMLFormElement>) => {
+    if(calendarMenu === false) {
+      e.stopPropagation()
+      setCalendarMenu(true)
+      setEventForm(false)
+    }
+  }
+
   return (
     <div className="flex row w-screen h-screen bg-[#F9F3EF]">
 
         {eventForm && <EventForm
-          addEvent={() => "MAKE FUNCTION"}
-          exitEventForm={CalendarMenuVisibility}/>}
+          exitEventForm={exitEventForm} goToCalendarMenu={CalendarMenuVisibility}/>}
 
 				{calendarMenu && <CalendarMenu 
           openEventForm={CalendarMenuVisibility}
@@ -79,3 +86,4 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
 }
 
 export default CalendarContainer
+

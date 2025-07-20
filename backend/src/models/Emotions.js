@@ -2,8 +2,10 @@ const mongoose = require("mongoose");
 
 const emotionSchema = new mongoose.Schema({
   emotion: { type: String, required: true, trim: true },
-  content: { type: String, trim: true, default: "" },
-  userId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'User' },
+  title : {type : String, required : true, trim : true, default : ""},
+  leftContent: { type: String, trim: true, default: "" },
+  rightContent: { type: String, trim: true, default: "" },
+  userId: { type: mongoose.Schema.Types.ObjectId},
   sharedEmails: { type: [String], default: [] },
   createdAt: { type: Date, default: Date.now }
 });

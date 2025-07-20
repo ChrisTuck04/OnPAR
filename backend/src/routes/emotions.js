@@ -1,35 +1,45 @@
 const express = require("express");
-const Emotions = require("../models/Emotions");
+const Emotion = require("../models/Emotions");
 const { authenticateToken } = require("./auth");
 
 const router = express.Router();
 
 // Create Emotion API
 router.post("/create-emotion", authenticateToken, async (req, res) => {
+  console.log("flag -1")
   const userId = req.user.id;
-  const { emotion, content } = req.body;
+  console.log("flag -2")
+  const { emotion, title, leftContent, rightContent, sharedEmails } = req.body;
+  console.log("flag -3")
 
   if (!emotion) {
     return res.status(400).json({ error: "Emotion is required." });
   }
 
   try {
-    const newEmotion = new Emotions({
+    console.log("flag 0")
+    const newEmotion = new Emotion({
       emotion,
-      content: content || "",
-      userId: userId
+      leftContent: leftContent || "",
+      rightContent: rightContent || "",
+      userId: userId,
+      title: title
     });
 
+    console.log("flag 1")
     await newEmotion.save();
+    console.log("flag 2")
 
     res.status(201).json({ 
       message: "Emotion logged successfully", 
       emotion: {
         id: newEmotion._id,
         emotion: newEmotion.emotion,
-        content: newEmotion.content,
+        leftContent: newEmotion.leftContent,
+        rightContent: newEmotion.rightContent,
         createdAt: newEmotion.createdAt,
-        userId: newEmotion.userId
+        userId: newEmotion.userId,
+        title: newEmotion.title
       }
     });
   } catch (error) {
@@ -38,7 +48,7 @@ router.post("/create-emotion", authenticateToken, async (req, res) => {
   }
 });
 
-// Read Emotions by Date Range API
+// Read Emotion by Date Range API
 router.post("/read-emotions", authenticateToken, async (req, res) => {
   const userId = req.user.id;
   const { startDate, endDate } = req.body;
@@ -51,7 +61,7 @@ router.post("/read-emotions", authenticateToken, async (req, res) => {
     const queryStartDate = new Date(startDate);
     const queryEndDate = new Date(endDate);
 
-    const emotions = await Emotions.find({
+    const emotions = await Emotion.find({
       userId: userId,
       createdAt: {
         $gte: queryStartDate,
@@ -60,7 +70,7 @@ router.post("/read-emotions", authenticateToken, async (req, res) => {
     }).sort({ createdAt: -1 });
 
     res.status(200).json({ 
-      message: "Emotions retrieved successfully", 
+      message: "Emotion retrieved successfully", 
       emotions: emotions 
     });
   } catch (error) {
@@ -72,14 +82,14 @@ router.post("/read-emotions", authenticateToken, async (req, res) => {
 // Update Emotion API
 router.post("/update-emotion", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { emotionId, emotion, content } = req.body;
+  const { emotionId, emotion, leftContent, rightContent, title } = req.body;
 
   if (!emotionId) {
     return res.status(400).json({ error: "emotionId is required." });
   }
 
   try {
-    const emotionEntry = await Emotions.findOne({
+    const emotionEntry = await Emotion.findOne({
       _id: emotionId,
       userId: userId
     });
@@ -91,8 +101,17 @@ router.post("/update-emotion", authenticateToken, async (req, res) => {
     if (emotion !== undefined) {
       emotionEntry.emotion = emotion;
     }
-    if (content !== undefined) {
-      emotionEntry.content = content;
+
+    if (leftContent !== undefined) {
+      emotionEntry.leftContent = leftContent;
+    }
+
+    if (rightContent !== undefined) {
+      emotionEntry.rightContent = rightContent;
+    }
+
+    if (title !== undefined) {
+      emotionEntry.title = title
     }
 
     await emotionEntry.save();
@@ -117,7 +136,7 @@ router.post("/delete-emotion", authenticateToken, async (req, res) => {
   }
 
   try {
-    const emotion = await Emotions.findOne({
+    const emotion = await Emotion.findOne({
       userId: userId,
       _id: emotionId
     });

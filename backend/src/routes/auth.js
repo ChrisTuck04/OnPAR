@@ -234,7 +234,7 @@ router.post("/forgot-password", async (req, res) => {
     const user = await User.findOne({ email });
     if(!user)
     {
-      res.status(200).json({ message: "Password Reset Email Sent" });
+      return res.status(400).json({ error: "User not found" });
     }
 
     const resetToken = randomUUID();
@@ -273,8 +273,8 @@ router.post("/reset-password", async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     user.passwordHash = hashedPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
+    user.resetToken = undefined;
+    user.resetTokenExpires = undefined;
     await user.save();
 
     res.status(200).json({ message: "Your password has been successfully reset." });
@@ -296,7 +296,7 @@ router.post("/read-user", authenticateToken, async (req, res) => {
       _id: userId
     });
 
-    res.status(200).json({ message: "User retrieved successfully", firstName: user.firstName, lastName: user.lastName });
+    res.status(200).json({ message: "User retrieved successfully", firstName: user.firstName, lastName: user.lastName, _id: user._id});
 
     
   }

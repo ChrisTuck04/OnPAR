@@ -1,23 +1,21 @@
 
 import GolfBackground from "../components/General/GolfBackground"
 import CalendarContainer from "../components/CalendarPage/CalendarComponents/CalendarContainer.tsx";
-import EmotionCard from "../components/CalendarPage/EmotionCardComponents/EmotionCard.tsx"
+import EmotionCard from "../components/CalendarPage/EmotionCard/JournalComponents/EmotionCard.tsx"
 import HappyTheme from '../components/CalendarPage/HappyComponents/HappyTheme.tsx';
 import SadTheme from '../components/CalendarPage/SadComponents/SadTheme.tsx';
 import PleasantTheme from '../components/CalendarPage/PleasantComponents/PleasantTheme.tsx';
 import AngryTheme from '../components/CalendarPage/AngryComponents/AngryTheme.tsx';
 import DropdownMenu from '../components/CalendarPage/DropdownMenuComponents/DropdownMenu.tsx';
 import DropdownButton from '../components/CalendarPage/DropdownMenuComponents/DropdownButton.tsx';
-import { useState, useEffect } from 'react';
-//import dayjs from "dayjs";
-//import type { User } from "../types/User"
-import type { Emotions } from "../types/Emotions.ts";
-
-//import { createEmotion, readEmotion, updateEmotions,deleteEmotion } from "../api/emotions"
-
+import { useState, useEffect, useRef, useCallback  } from 'react';
+import {motion, AnimatePresence} from "framer-motion"
 // @ts-expect-error axios functions in js
 import { getUser } from "../api/auth"
 import type { AxiosError } from "axios";
+import type { Emotions } from "../types/Emotions"
+// @ts-expect-error events interface import
+import {createEmotion} from "../api/emotions"
 
 
 const CalendarPage = () => {
@@ -29,16 +27,10 @@ const CalendarPage = () => {
   const [angryTheme, setAngryTheme] = useState(false);
   const [dropdownMenu, setDropdownMenu] = useState(false)
   const [menuButton, setMenuButton] = useState(false)
-
-  /*these are the useStates for user object, all
-   emotions of the user per day they logged it,
-   and events list that holds all the events the
-   user made. Will need to parse the events list
-   even further when adding events to the */
-
-  //const [emotions, setEmotions] = useState<Emotions[]>([])
-
   const [userName, setUserName] = useState("")
+  const [userId, setUserId] = useState("")
+  const [openJournal, setOpenJournal] = useState<boolean>(false)
+  const [curEmotion, setCurEmotion] = useState<string>("")
 
   const CardVisibility = (e: React.MouseEvent<HTMLButtonElement>) => {
     if(emotionCard === true)
@@ -121,7 +113,7 @@ const CalendarPage = () => {
   const fetchUserName = async () => {
     try {
       const user = await getUser()
-      setUserName(user.firstName)
+      setUserId(user._id)
     } catch (err : unknown) {
       const error = err as AxiosError<{error : string}>
       alert(error.response?.data?.error || "retrieving user first name failed")
@@ -131,6 +123,23 @@ const CalendarPage = () => {
   useEffect(() => {
     fetchUserName()
   }, [])
+
+  // Log the state whenever it changes
+    useEffect(() => {
+    console.log("EmotionCard: openJournal state is now:", openJournal);
+    }, [openJournal]);
+  
+    const toggleJournalVisibility = (e : React.MouseEvent<HTMLButtonElement>) => {
+      setOpenJournal((prevOpenJournal) => {
+        console.log("toggleJournalVisibility: Toggling from", prevOpenJournal, "to", !prevOpenJournal)
+        return !prevOpenJournal
+      })
+      e.stopPropagation()
+    }
+
+    const changeCurrentEmotionField = (data : string) => {
+      setCurEmotion(data)
+    }
 
   return (
       <div className="min-h-screen flex items-center justify-center">
@@ -146,15 +155,32 @@ const CalendarPage = () => {
         </div>
 
         <div className="fixed snap-center z-40">
-          {emotionCard && <EmotionCard Happy={Happy} Pleasant={Pleasant} Sad={Sad} Angry={Angry}/>}
+          {emotionCard && 
+          <EmotionCard 
+          Happy={Happy}
+          Pleasant={Pleasant}
+          Sad={Sad} 
+          Angry={Angry}
+          toggleJournalView={toggleJournalVisibility}
+          journalValid={openJournal}
+          changeEmotionField={changeCurrentEmotionField}/>}
         </div>
+
+        <AnimatePresence>
+					{openJournal &&
+          <Journal
+          onCloseJournal={toggleJournalVisibility}
+          currentEmotion={curEmotion}
+          userID={userId}
+          />}
+				</AnimatePresence>
 
         <div>
           {menuButton && <DropdownButton OpenDropdownMenu={OpenDropdownMenu}/>}
           {dropdownMenu && <DropdownMenu 
           CardVisibility={CardVisibility} 
           CalendarVisibility={CalendarVisibility} 
-          ReflectionVisibility={()=> null} 
+          ReflectionVisibility={toggleJournalVisibility} 
           FriendsListVisibility={()=> null}
           CloseDropdownMenu={CloseDropdownMenu}/>}
         </div>
@@ -193,11 +219,11 @@ const DateTimeHeader = () => {
 }
 */
 
-interface Props {
+interface WelcomeHeaderProps {
   name: string
 }
 
-const WelcomeHeader = ({name} : Props) => {
+const WelcomeHeader = ({name} : WelcomeHeaderProps) => {
   return (
     <div className="fixed flex flex-col items-center w-full h-full top-[100px] text-white font-fredoka text-[65px] z-[25]"
           style={{WebkitTextStroke: "1px #D2C1B6"}}>
@@ -205,5 +231,213 @@ const WelcomeHeader = ({name} : Props) => {
     </div>
   )
 }
+
+interface JournalProps {
+  onCloseJournal: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  currentEmotion : string
+  userID : string
+}
+
+const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
+  const [emotion, setEmotion] = useState<Emotions>({
+    title : "",
+    emotion : "",
+    leftContent : "",
+    rightContent : "",
+    userId : "",
+    sharedEmails : [],
+  })
+
+  const [emotionIcon, setEmotionIcon] = useState("")
+  const [title, setTitle] = useState("");
+  const [leftText, setLeftText] = useState("");
+  const [rightText, setRightText] = useState("");
+  const [userId, setUserId] = useState("")
+  const [sharedEmails, setSharedEmails] = useState<string[]>([])
+
+  // Refs for the textareas to measure their content height
+  const leftTextAreaRef = useRef<HTMLTextAreaElement>(null);
+  const rightTextAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Define the common style for lined paper background
+  const linedPaperStyle = {
+    backgroundImage: `repeating-linear-gradient(to bottom, #FFAA00 0px, #FFAA00 1px, transparent 1px, transparent 28px)`,
+    backgroundSize: "100% 28px",
+    backgroundPositionY: "0px", // Lines start one line below the text
+  };
+
+  // --- Helper function to handle text area changes and enforce visual limit ---
+  const handleTextAreaChange = useCallback((
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    setText: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    const newValue = e.target.value;
+    setText(newValue); // Optimistically update the state first
+  }, []);
+
+  // --- Effect to enforce visual limit for left textarea ---
+  useEffect(() => {
+    if (leftTextAreaRef.current) {
+      const textarea = leftTextAreaRef.current;
+      
+      // If scrollHeight is greater than clientHeight, content overflows
+      if (textarea.scrollHeight > textarea.clientHeight) {
+        alert("Left page limit reached! Cannot type further.");
+        // Revert to the previous content that fit
+        setLeftText(prevText => {
+          return prevText; // `prevText` here is the content *before* the overflowing character was added.
+        });
+      }
+    }
+  }, [leftText]);
+
+  useEffect(() => {
+    if (rightTextAreaRef.current) {
+      const textarea = rightTextAreaRef.current;
+      // We don't need to set height to 'auto' here if we rely on Tailwind's fixed height.
+      
+      // If scrollHeight is greater than clientHeight, content overflows
+      if (textarea.scrollHeight > textarea.clientHeight) {
+        alert("Right page limit reached! Cannot type further.");
+        setRightText(prevText => {
+          return prevText;
+        });
+      }
+
+    }
+  }, [rightText]);
+
+  useEffect(() => {
+    setEmotionIcon(currentEmotion)
+    console.log("emotion icon useEffect ran!")
+  }, [currentEmotion])
+
+  useEffect(() => {
+    setUserId(userID)
+  }, [userID])
+
+  const assignJournalEntryValues = () => {
+    if(title === "") {
+      alert("Invalid journal entry, title required!")
+      return
+    } else if(leftText === "" && rightText === "") {
+      alert("Invalid, please include a journal entry")
+      return
+    } else {
+
+      const updatedEmotion : Emotions = {
+        ...emotion,
+        title : title,
+        emotion : emotionIcon,
+        leftContent : leftText,
+        rightContent : rightText,
+        userId : userId,
+        sharedEmails : sharedEmails,
+      }
+
+      setEmotion(updatedEmotion)
+      return updatedEmotion
+    }
+  }
+
+  const createEmotionObject = async (e : React.MouseEvent<HTMLButtonElement>, currentEmotion : Emotions) => {
+    try {
+
+      console.log("creating emotion")
+      const response = await createEmotion(currentEmotion)
+      console.log("created emotion successfully!", response)
+
+      setEmotion((prevEmotion) => ({
+        ...prevEmotion,
+        emotion : "",
+        leftContent : "",
+        rightContent : "",
+        sharedEmails : [],
+      }))
+
+      onCloseJournal(e)
+    } catch(err: unknown) {
+      const error = err as AxiosError<{error : string}>;
+      console.error("Error creating emotion object:", error.response?.data?.error || "Unknown error occurred.");
+      alert(`Failed to create emotion object: ${error.response?.data?.error || "Please try again."}`);
+    }
+  }
+
+  const emotionCreationWrapper = async (e : React.MouseEvent<HTMLButtonElement>) => {
+    const updatedEmotion = assignJournalEntryValues()
+    if(!updatedEmotion) return
+    await createEmotionObject(e, updatedEmotion)
+  }
+
+  return (
+    <motion.div
+      initial={{ scaleX: 0 }}
+      animate={{ scaleX: 1 }}
+      exit={{ scaleX: 0 }}
+      transition={{ duration: 0.5, ease: "easeInOut" }}
+      className="fixed inset-0 flex items-center justify-center z-50"
+    >
+      <motion.div className="flex w-[1000px] h-[700px] bg-onparOrange rounded-[40px] shadow-xl origin-left overflow-hidden">
+        {/* Left Page */}
+        <div className="w-1/2 p-6 border-4 border-onparOrange bg-onparLightYellow font-fredoka rounded-bl-[40px] rounded-tl-[40px] relative flex flex-col">
+          <input
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full text-2xl font-bold bg-transparent border-b-2 border-black focus:outline-none placeholder-black pb-2"
+            style={{ WebkitTextStroke: "0px" }}
+          />
+          <textarea
+            ref={leftTextAreaRef} // Attach ref
+            placeholder="Write your thoughts..."
+            value={leftText}
+            onChange={(e) => handleTextAreaChange(e, setLeftText)}
+            // Set overflowY to hidden to prevent scrolling
+            className="mt-2 w-full h-[532px] bg-transparent resize-none focus:outline-none text-lg placeholder-black overflow-y-hidden"
+            style={{
+              ...linedPaperStyle,
+              lineHeight: "28px",
+              WebkitTextStroke: "0px",
+            }}
+          />
+        </div>
+
+        {/* Right Page */}
+        <div className="w-1/2 p-6 flex flex-col border-t-4 border-r-4 border-b-4 font-fredoka border-onparOrange bg-onparLightYellow gap-2 rounded-br-[40px] rounded-tr-[40px]">
+          <textarea
+            ref={rightTextAreaRef} // Attach ref
+            value={rightText}
+            onChange={(e) => handleTextAreaChange(e, setRightText)}
+            // Set overflowY to hidden to prevent scrolling
+            className="w-full h-[532px] bg-transparent resize-none focus:outline-none text-lg placeholder-black overflow-y-hidden"
+            style={{
+              ...linedPaperStyle,
+              lineHeight: "28px",
+              WebkitTextStroke: "0px",
+            }}
+          />
+
+          <div className="flex flex-row items-end justify-center w-full gap-2 mt-auto">
+            <button
+            className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition"
+            onClick={emotionCreationWrapper}>
+              Save
+            </button>
+
+            <button
+            onClick={onCloseJournal}
+            className="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded-lg transition"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+
 
 export default CalendarPage
