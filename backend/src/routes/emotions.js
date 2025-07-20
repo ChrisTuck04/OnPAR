@@ -82,7 +82,7 @@ router.post("/read-emotions", authenticateToken, async (req, res) => {
 // Update Emotion API
 router.post("/update-emotion", authenticateToken, async (req, res) => {
   const userId = req.user.id;
-  const { emotionId, emotion, leftContent, title } = req.body;
+  const { emotionId, emotion, leftContent, rightContent, title } = req.body;
 
   if (!emotionId) {
     return res.status(400).json({ error: "emotionId is required." });
