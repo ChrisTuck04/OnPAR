@@ -103,11 +103,11 @@ router.post("/update-emotion", authenticateToken, async (req, res) => {
     }
 
     if (leftContent !== undefined) {
-      emotionEntry.content = leftContent;
+      emotionEntry.leftContent = leftContent;
     }
 
     if (rightContent !== undefined) {
-      emotionEntry.content = rightContent;
+      emotionEntry.rightContent = rightContent;
     }
 
     if (title !== undefined) {
