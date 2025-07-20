@@ -4,10 +4,8 @@ import {
   addMonths,
   subMonths,
   startOfMonth,
-  endOfMonth,
   getDaysInMonth,
   getDay,
-  isSameMonth,
   isToday,
   getDate,
   addDays,
@@ -69,7 +67,7 @@ const CalendarHeading = ({
 
       <div>
         <hr className="absolute w-full border-t-[4px] border-onparOrange top-[62px]" />
-        <hr className="absolute w-full border-t-[4px] border-onparOrange top-[108px]" />
+        <hr className="absolute w-full border-t-[4px] border-onparOrange top-[119px]" />
       </div>
 
       <div
@@ -79,7 +77,7 @@ const CalendarHeading = ({
         {daysOfWeek.map((day, index) => (
           <div
             key={index}
-            className="border-[2px] border-onparOrange py-2 px-[40px]"
+            className="border-[2px] border-onparOrange py-2 px-[40px] h-[60px]"
           >
             {day}
           </div>
@@ -148,11 +146,11 @@ const CalendarCell = ({ day }: CalendarCellProps) => {
   return (
     <div
       key={day.date.toISOString()}
-      className={`relative border-[2px] font-fredoka border-onparOrange flex items-center justify-center p-1 hover:bg-onparOrange
-      ${!day.isCurrentMonth ? 'text-gray-400 text-transparent' : ''}
+      className={`relative border-[2px] font-fredoka border-onparOrange flex items-center justify-center p-1 hover:bg-onparOrange w-full aspect-square
+      ${!day.isCurrentMonth ? 'text-transparent' : ''}
       ${day.isToday ? 'text-black' : ''}
       `}
-      style={day.isToday ? {animation: 'blink 3s infinite', backgroundColor: 'bg-onparOrange'} : {}}
+      style={day.isToday ? {animation: 'blink 1s infinite', backgroundColor: 'bg-onparOrange'} : {}}
     >
 
       <style>

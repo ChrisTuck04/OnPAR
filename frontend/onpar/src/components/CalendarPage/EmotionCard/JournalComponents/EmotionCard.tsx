@@ -1,6 +1,3 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion"
-
 interface Props{
     Happy: (e: React.MouseEvent<HTMLButtonElement>) => void
     Pleasant: (e: React.MouseEvent<HTMLButtonElement>) => void
@@ -88,7 +85,7 @@ const EmotionButton = ({image, emotion, color, ThemeChange, openJournal, changeE
 			onClick={(e) => {
 				setEmotionFieldString()
 				openJournal(e)
-				ThemeChange && ThemeChange(e)
+				ThemeChange!(e)
 				}}>
         <img className="relative bottom-[6px] w-[80px] h-[80px]" src={image} alt="image" />
       </button>

@@ -256,6 +256,9 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
   const [userId, setUserId] = useState("")
   const [sharedEmails, setSharedEmails] = useState<string[]>([])
 
+  //function to set sharedEmails must 
+  setSharedEmails([])
+
   // Refs for the textareas to measure their content height
   const leftTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const rightTextAreaRef = useRef<HTMLTextAreaElement>(null);
