@@ -12,8 +12,6 @@ import 'login_page.dart';
 
 var logger = Logger(output: null);
 
-late final String userIdent;
-
 typedef EmotionEntry = DropdownMenuEntry<EmotionTypes>;
 
 enum EmotionTypes {
@@ -40,10 +38,6 @@ class CalendarPage extends StatefulWidget {
   final String token;
   final String uid;
   const CalendarPage({super.key, required this.token, required this.uid});
-
-  setUID() {
-    userIdent = uid;
-  }
 
   @override
   State<CalendarPage> createState() => _CalendarPageState();
@@ -77,7 +71,6 @@ class _CalendarPageState extends State<CalendarPage> {
   @override
   void initState() {
     super.initState();
-    userIdent = widget.uid;
     _selectedDay = _focusedDay;
     _eventService = EventService(widget.token);
     _emotionService = EmotionService(widget.token);
@@ -302,6 +295,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   void _submitEmotion({String? id}) async {
+    String userIdent = widget.uid;
     final emotion = Emotion(
       id: id,
       emotion: _selectedEmotionType?.label ?? 'Neutral',
