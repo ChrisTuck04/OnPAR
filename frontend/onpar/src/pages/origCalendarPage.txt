@@ -1,4 +1,145 @@
+  
+  const assignJournalEntryValues = () => {
+    if(title === "") {
+      alert("Invalid journal entry, title required!")
+      return
+    } else if(leftText === "" && rightText === "") {
+      alert("Invalid, please include a journal entry")
+      return
+    } else {
 
+      const updatedEmotion : Emotions = {
+        ...emotion,
+        title : title,
+        emotion : emotionIcon,
+        leftContent : leftText,
+        rightContent : rightText,
+        userId : userId,
+        sharedEmails : sharedEmails,
+      }
+
+      setEmotion(updatedEmotion)
+      return updatedEmotion
+    }
+  }
+
+  const checkIfEmotionExists = async () => {
+    try {
+
+      const response = await readEmotions(startOfDay(new Date()), endOfDay(new Date()))
+      const emotionArrLength = response.emotion.length
+
+      if(emotionArrLength > 0)
+        return response.emotion[0]
+
+      else {
+        console.log("No emoition for current day yet, proceeding to create emotion for the day")
+        return null
+      }
+
+    } catch(err : unknown) {
+      const error = err as AxiosError<{error : string}>;
+      console.error("Error retrieving emotions array", error.response?.data?.error || "Unknown error occurred.");
+    }
+  }
+
+  const createEmotionObject = async (e : React.MouseEvent<HTMLButtonElement>, currentEmotion : Emotions) => {
+    try {
+
+      console.log("creating emotion")
+      const response = await createEmotion(currentEmotion)
+      console.log("created emotion successfully!", response)
+
+      onCloseJournal(e)
+    } catch(err: unknown) {
+      const error = err as AxiosError<{error : string}>;
+      console.error("Error creating emotion object:", error.response?.data?.error || "Unknown error occurred.");
+      alert(`Failed to create emotion object: ${error.response?.data?.error || "Please try again."}`);
+    }
+  }
+
+  const updateEmotionObject = async (e : React.MouseEvent<HTMLButtonElement>, emotionId : string, currentEmotion : Emotions) => {
+    try {
+
+      console.log("updating emotion")
+      const response = await updateEmotion(emotionId, currentEmotion)
+      console.log("updated emotion successfully!", response)
+
+      onCloseJournal(e)
+    } catch(err: unknown) {
+      const error = err as AxiosError<{error : string}>;
+      console.error("Error updating emotion object:", error.response?.data?.error || "Unknown error occurred.");
+      alert(`Failed to update emotion object: ${error.response?.data?.error || "Please try again."}`);
+    }
+  }
+
+  const emotionCreationWrapper = async (e : React.MouseEvent<HTMLButtonElement>) => {
+    const updatedEmotion = assignJournalEntryValues()
+    if(!updatedEmotion) return
+
+    const possibleEmotionObject = await checkIfEmotionExists()
+
+    if(possibleEmotionObject === null)
+      await createEmotionObject(e, updatedEmotion)
+    else {
+      await updateEmotionObject(e, possibleEmotionObject._id, updatedEmotion)
+    }
+  }
+
+
+
+
+
+
+
+-------------------
+setEmotion((prevEmotion) => ({
+        ...prevEmotion,
+        emotion : "",
+        leftContent : "",
+        rightContent : "",
+        sharedEmails : [],
+      }))
+------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
 import GolfBackground from "../components/General/GolfBackground"
 import CalendarContainer from "../components/CalendarPage/CalendarComponents/CalendarContainer.tsx";
 import EmotionCard from "../components/CalendarPage/EmotionCard/JournalComponents/EmotionCard.tsx"
@@ -15,8 +156,7 @@ import { getUser } from "../api/auth"
 import type { AxiosError } from "axios";
 import type { Emotions } from "../types/Emotions"
 // @ts-expect-error events interface import
-import {createEmotion, readEmotions, updateEmotions} from "../api/emotions"
-import {startOfDay, endOfDay, set} from 'date-fns';
+import {createEmotion} from "../api/emotions"
 
 
 const CalendarPage = () => {
@@ -237,45 +377,6 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
   const leftTextAreaRef = useRef<HTMLTextAreaElement>(null);
   const rightTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
-  const resetEmotionFieldsIfNewDay = async () => {
-    try {
-
-      const response = await readEmotions(startOfDay(new Date()), endOfDay(new Date()))
-      console.log("flag 1")
-      const emotionArrLength = response.emotions.length
-      console.log("flag 2")
-
-      if(emotionArrLength > 0) {
-        const existingEmotion = response.emotions[0];
-        setEmotion(existingEmotion);
-        setTitle(existingEmotion.title || "");
-        setLeftText(existingEmotion.leftContent || "");
-        setRightText(existingEmotion.rightContent || "");
-        setSharedEmails(existingEmotion.sharedEmails || []);  
-        return
-      }
-
-      else {
-        setEmotion((prevEmotion) => ({
-          ...prevEmotion,
-          emotion : "",
-          leftContent : "",
-          rightContent : "",
-          sharedEmails : [],
-        }))
-        return
-      }
-
-    } catch(err : unknown) {
-      const error = err as AxiosError<{error : string}>;
-      console.error("Error retrieving emotions array", error.response?.data?.error || "Unknown error occurred.");
-    }
-  }
-
-  useEffect(() => {
-    resetEmotionFieldsIfNewDay()
-  }, [])
-
   // Define the common style for lined paper background
   const linedPaperStyle = {
     backgroundImage: `repeating-linear-gradient(to bottom, #FFAA00 0px, #FFAA00 1px, transparent 1px, transparent 28px)`,
@@ -353,34 +454,20 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
     }
   }
 
-  const checkIfEmotionExists = async () => {
-    try {
-
-      const response = await readEmotions(startOfDay(new Date()), endOfDay(new Date()))
-      console.log("flag 3")
-      const emotionArrLength = response.emotions.length
-      console.log("flag 4")
-
-      if(emotionArrLength > 0)
-        return response.emotions[0]
-
-      else {
-        console.log("No emoition for current day yet, proceeding to create emotion for the day")
-        return null
-      }
-
-    } catch(err : unknown) {
-      const error = err as AxiosError<{error : string}>;
-      console.error("Error retrieving emotions array", error.response?.data?.error || "Unknown error occurred.");
-    }
-  }
-
   const createEmotionObject = async (e : React.MouseEvent<HTMLButtonElement>, currentEmotion : Emotions) => {
     try {
 
       console.log("creating emotion")
       const response = await createEmotion(currentEmotion)
       console.log("created emotion successfully!", response)
+
+      setEmotion((prevEmotion) => ({
+        ...prevEmotion,
+        emotion : "",
+        leftContent : "",
+        rightContent : "",
+        sharedEmails : [],
+      }))
 
       onCloseJournal(e)
     } catch(err: unknown) {
@@ -390,32 +477,10 @@ const Journal = ({ onCloseJournal, currentEmotion, userID }: JournalProps) => {
     }
   }
 
-  const updateEmotionObject = async (e : React.MouseEvent<HTMLButtonElement>, emotionId : string, currentEmotion : Emotions) => {
-    try {
-
-      console.log("updating emotion")
-      const response = await updateEmotions(emotionId, currentEmotion)
-      console.log("updated emotion successfully!", response)
-
-      onCloseJournal(e)
-    } catch(err: unknown) {
-      const error = err as AxiosError<{error : string}>;
-      console.error("Error updating emotion object:", error.response?.data?.error || "Unknown error occurred.");
-      alert(`Failed to update emotion object: ${error.response?.data?.error || "Please try again."}`);
-    }
-  }
-
-   const emotionCreationWrapper = async (e : React.MouseEvent<HTMLButtonElement>) => {
+  const emotionCreationWrapper = async (e : React.MouseEvent<HTMLButtonElement>) => {
     const updatedEmotion = assignJournalEntryValues()
     if(!updatedEmotion) return
-
-    const possibleEmotionObject = await checkIfEmotionExists()
-
-    if(possibleEmotionObject === null)
-      await createEmotionObject(e, updatedEmotion)
-    else {
-      await updateEmotionObject(e, possibleEmotionObject._id, updatedEmotion)
-    }
+    await createEmotionObject(e, updatedEmotion)
   }
 
   return (

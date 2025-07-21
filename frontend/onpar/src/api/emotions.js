@@ -25,7 +25,7 @@ export const readEmotions = async (startDate, endDate) => {
   return response.data;
 };
 
-export const updateEmotion = async (emotionId, emotionData) => {
+export const updateEmotions = async (emotionId, emotionData) => {
   const response = await axios.post(`${API_URL}/update-emotion`, {
     emotionId,
     ...emotionData
@@ -33,7 +33,7 @@ export const updateEmotion = async (emotionId, emotionData) => {
   return response.data;
 };
 
-export const deleteEmotion = async (emotionId) => {
+export const deleteEmotions = async (emotionId) => {
   const response = await axios.post(`${API_URL}/delete-emotion`, {
     emotionId
   }, getAuthHeaders());

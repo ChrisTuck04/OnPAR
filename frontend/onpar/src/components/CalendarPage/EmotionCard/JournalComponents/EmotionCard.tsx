@@ -60,7 +60,7 @@ interface ButtonProps{
   color: string
   ThemeChange? : (e: React.MouseEvent<HTMLButtonElement>) => void
   openJournal : (e : React.MouseEvent<HTMLButtonElement>) => void
-	changeEmotionField : (data : string) => void
+  changeEmotionField : (data : string) => void
 }
 
 const EmotionButton = ({image, emotion, color, ThemeChange, openJournal, changeEmotionField}: ButtonProps) => {

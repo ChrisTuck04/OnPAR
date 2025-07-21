@@ -22,10 +22,6 @@ const CalendarMenu = ({openEventForm, ExitCalendar, DayView, WeekView, MonthView
 			onClick={openEventForm}>
 				Create Event
 			</button>
-
-			<button className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl hover:bg-[#D2C1B6]">
-				Share a Calendar
-			</button>
 			
 			<button
 			className="w-[280px] h-[70px] border-[5px] border-[#D2C1B6] py-[10px] rounded-3xl hover:bg-[#D2C1B6]"
