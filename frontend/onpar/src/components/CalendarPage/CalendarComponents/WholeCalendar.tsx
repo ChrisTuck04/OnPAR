@@ -73,7 +73,7 @@ const WholeCalendar = ({eventVersion} : WholeCalendarProps) => {
         goToNextMonth={goToNextMonth}
       />
       
-      <CalendarGrid currentDate={currentDate} eventVersion={version} onEditEvent={handleEditClick} onSave={handleSave} onClose={handleClose}/>
+      <CalendarGrid currentDate={currentDate} eventVersion={eventVersion} onEditEvent={handleEditClick} onSave={handleSave} onClose={handleClose}/>
       
       {showModal && selectedEvent && (
         <EditEventModal

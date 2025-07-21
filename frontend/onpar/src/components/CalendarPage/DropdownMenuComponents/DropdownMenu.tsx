@@ -5,12 +5,10 @@ interface Props {
     CardVisibility: (e: React.MouseEvent<HTMLButtonElement>) => void
     CalendarVisibility: (e: React.MouseEvent<HTMLButtonElement>) => void
     ReflectionVisibility : (e: React.MouseEvent<HTMLButtonElement>) => void
-    FriendsListVisibility: (e: React.MouseEvent<HTMLButtonElement>) => void
     CloseDropdownMenu : (e: React.MouseEvent<HTMLButtonElement>) => void
-    
 }
 
-const DropdownMenu = ({CardVisibility, CalendarVisibility, ReflectionVisibility, FriendsListVisibility, CloseDropdownMenu} : Props) => {
+const DropdownMenu = ({CardVisibility, CalendarVisibility, ReflectionVisibility, CloseDropdownMenu} : Props) => {
   //const isLoggedIn = !!localStorage.getItem("token")
   //{isLoggedIn && <LogoutButton/>}
 
@@ -36,12 +34,6 @@ const DropdownMenu = ({CardVisibility, CalendarVisibility, ReflectionVisibility,
                 CloseDropdownMenu(e)
                 }}>
                     <span className="relative bottom-[6px]">Reflection</span>
-                </button>
-            </div>
-
-            <div className="font-fredoka z-20" style={{WebkitTextStroke: "1px #FFAA00"}}>
-                <button className="w-[193px] h-[52px] hover:bg-onparOrange border-[3px] border-onparOrange bg-onparLightYellow rounded-2xl p-5 text-l" onClick={FriendsListVisibility}>
-                    <span className="relative bottom-[6px]">Friends</span>
                 </button>
             </div>
 

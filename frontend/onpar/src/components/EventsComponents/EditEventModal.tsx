@@ -36,7 +36,13 @@ export const EditEventModal = ({ event, onClose, onSave } : EditEventModalProps)
 
     const handleSubmit = async () => {
         try {            
-            await updateEvents({ ...event, title, startTime, endTime });
+            const updateData = {
+                eventId: event._id,
+                title,
+                startTime,
+                endTime,
+            };
+            await updateEvents(event._id, updateData);
             onSave();
             onClose();
         } catch (error) {
