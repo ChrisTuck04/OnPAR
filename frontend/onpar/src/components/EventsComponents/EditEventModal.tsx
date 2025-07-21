@@ -1,6 +1,10 @@
 import { useState } from "react";
 // @ts-expect-error events interface import
 import { updateEvents } from "../../api/events"
+import {
+  format,
+ parseISO
+} from 'date-fns';
 
 interface Event {
   _id: string;
@@ -24,10 +28,13 @@ interface EditEventModalProps {
 
 export const EditEventModal = ({ event, onClose, onSave } : EditEventModalProps) => {
     const toLocalDateTime = (isoString: string) => {
-        const date = new Date(isoString);
-        const offset = date.getTimezoneOffset();
-        const localDate = new Date(date.getTime() - offset * 60000);
-        return localDate.toISOString().slice(0, 16); // "YYYY-MM-DDTHH:mm"
+        if (!isoString) return "";
+        const date = parseISO(isoString);
+        return format(date, "yyyy-MM-dd'T'HH:mm"); 
+    };
+    const localDateTimeToISOString = (localDateTime: string) => {
+        const date = new Date(localDateTime);
+        return date.toISOString();
     };
 
     const [title, setTitle] = useState(event.title);
@@ -39,8 +46,8 @@ export const EditEventModal = ({ event, onClose, onSave } : EditEventModalProps)
             const updateData = {
                 eventId: event._id,
                 title,
-                startTime,
-                endTime,
+                startTime: localDateTimeToISOString(startTime),
+                endTime: localDateTimeToISOString(endTime),
             };
             await updateEvents(event._id, updateData);
             onSave();
