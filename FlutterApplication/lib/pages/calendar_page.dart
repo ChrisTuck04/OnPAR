@@ -296,6 +296,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
   void _submitEmotion({String? id}) async {
     String userIdent = widget.uid;
+
     final emotion = Emotion(
       id: id,
       emotion: _selectedEmotionType?.label ?? 'Neutral',
@@ -754,7 +755,7 @@ class _CalendarPageState extends State<CalendarPage> {
             },
           ),
           const SizedBox(height: 8),
-          Text("Events for this day", style: Theme
+          Text("Events for ${DateFormat('MM-dd').format(_focusedDay)}", style: Theme
               .of(context)
               .textTheme
               .titleMedium),
