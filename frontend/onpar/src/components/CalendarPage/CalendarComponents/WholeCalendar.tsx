@@ -354,17 +354,16 @@ const DisplayedEmotion = ({emotion, displayCurrentMonth} : DisplayedEmotionProps
   const emotionIcon = emotionIcons[emotion.emotion] || '';
 
   return (
-    // Only render the button if displayCurrentMonth is true
     displayCurrentMonth ? (
       <button
         className={`flex items-center gap-1 text-xs text-black p-0.5 rounded-md bg-opacity-80 w-full overflow-hidden whitespace-nowrap`}
         // onClick={openJournalEntry} // Removed onClick as per request
       >
         <img
-          className="w-4 h-4 flex-shrink-0" // Adjusted size for consistency
+          className="w-4 h-4 flex-shrink-0" 
           src={emotionIcon}
           alt={`Emotion icon for ${emotion.emotion}`}
-          onError={(e) => { e.currentTarget.src = 'https://placehold.co/16x16/cccccc/000000?text=NA'; }} // Fallback image
+          onError={(e) => { e.currentTarget.src = 'https://placehold.co/16x16/cccccc/000000?text=NA'; }} 
         />
         <p className="font-fredoka text-[15px] truncate">{emotion.title}</p> {/* Truncate long titles */}
       </button>
