@@ -5,4 +5,5 @@ export interface Emotions {
   rightContent : string
   userId : string
   sharedEmails : string[]
+  createdAt : string
 }
