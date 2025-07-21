@@ -91,25 +91,25 @@ router.post("/update-emotion", authenticateToken, async (req, res) => {
     if (!emotionEntry) {
       return res.status(404).json({ error: "Emotion not found or you don't have permission to update it." });
     }
-
+    console.log("Check 1");
     if (emotion !== undefined) {
       emotionEntry.emotion = emotion;
     }
-
+    console.log("Check 2");
     if (leftContent !== undefined) {
       emotionEntry.leftContent = leftContent;
     }
-
+    console.log("Check 3");
     if (rightContent !== undefined) {
       emotionEntry.rightContent = rightContent;
     }
-
+    console.log("Check 4");
     if (title !== undefined) {
       emotionEntry.title = title
     }
-
+    console.log("Check 5");
     await emotionEntry.save();
-
+    console.log("Check 6");
     res.status(200).json({ 
       message: "Emotion updated successfully", 
       emotion: emotionEntry 
