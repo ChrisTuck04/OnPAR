@@ -741,12 +741,12 @@ class _CalendarPageState extends State<CalendarPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: () => _deleteEmotion(emotion),
-                      ),
-                      IconButton(
                         icon: Icon(Icons.edit, color: Colors.blue),
                         onPressed: () => _showEmotionDialog(emotion: emotion),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _deleteEmotion(emotion),
                       ),
                     ],
                   ),
@@ -755,7 +755,7 @@ class _CalendarPageState extends State<CalendarPage> {
             },
           ),
           const SizedBox(height: 8),
-          Text("Events for ${DateFormat('MM-dd').format(_focusedDay)}", style: Theme
+          Text("Events for ${DateFormat('MM-dd-yyyy').format(_focusedDay)}", style: Theme
               .of(context)
               .textTheme
               .titleMedium),
