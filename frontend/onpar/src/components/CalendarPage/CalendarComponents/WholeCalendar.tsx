@@ -32,6 +32,7 @@ interface Event {
 // @ts-expect-error readEvents, updateEvents, deleteEvents are from a JS file
 import { readEvents, updateEvents, deleteEvents } from "../../../api/events";
 import { AxiosError } from 'axios';
+import { EditEventModal } from '../../EventsComponents/EditEventModal';
 
 interface WholeCalendarProps {
   eventVersion : number
@@ -39,6 +40,22 @@ interface WholeCalendarProps {
 
 const WholeCalendar = ({eventVersion} : WholeCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [version, setVersion] = useState(eventVersion);
+
+  const handleEditClick = (event: Event) => {
+    setSelectedEvent(event);
+    setShowModal(true);
+  };
+
+  const handleSave = () => {
+    setVersion(prev => prev + 1);
+  };
+
+  const handleClose = () => {
+    setShowModal(false);
+  }
 
   const goToPreviousMonth = () => {
     setCurrentDate((prevDate) => subMonths(prevDate, 1));
@@ -56,7 +73,15 @@ const WholeCalendar = ({eventVersion} : WholeCalendarProps) => {
         goToNextMonth={goToNextMonth}
       />
       
-      <CalendarGrid currentDate={currentDate} eventVersion={eventVersion} />
+      <CalendarGrid currentDate={currentDate} eventVersion={version} onEditEvent={handleEditClick} onSave={handleSave} onClose={handleClose}/>
+      
+      {showModal && selectedEvent && (
+        <EditEventModal
+          event={selectedEvent}
+          onClose={() => setShowModal(false)}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 };
@@ -116,9 +141,12 @@ const CalendarHeading = ({
 interface CalendarGridProps {
   currentDate: Date;
   eventVersion : number
+  onEditEvent: (event: Event) => void;
+  onSave: () => void;
+  onClose: () => void;
 }
 
-const CalendarGrid = ({ currentDate, eventVersion }: CalendarGridProps) => {
+const CalendarGrid = ({ currentDate, eventVersion, onEditEvent, onSave, onClose }: CalendarGridProps) => {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [emotions, setEmotions] = useState<Emotions[]>([]) 
@@ -234,7 +262,7 @@ const CalendarGrid = ({ currentDate, eventVersion }: CalendarGridProps) => {
           );
         }) : [];
 
-        return <CalendarCell key={index} day={day} events={eventsForDay} emotions={emotionsForDay} />;
+        return <CalendarCell key={index} day={day} events={eventsForDay} emotions={emotionsForDay} onEditEvent={onEditEvent} onSave={onSave} onClose={onClose}/>;
       })}
     </div>
   );
@@ -248,9 +276,12 @@ interface CalendarCellProps {
   };
   events: Event[]; // Add events prop to CalendarCell
   emotions: Emotions[]; // Add emotions prop to CalendarCell
+  onEditEvent: (event: Event) => void;
+  onSave: () => void;
+  onClose: () => void;
 }
 
-const CalendarCell = ({ day, events, emotions }: CalendarCellProps) => {
+const CalendarCell = ({ day, events, emotions, onEditEvent, onSave, onClose }: CalendarCellProps) => {
   return (
     <div
       key={day.date.toISOString()}
@@ -285,7 +316,7 @@ const CalendarCell = ({ day, events, emotions }: CalendarCellProps) => {
       {/* Events container */}
       <div className="flex flex-col gap-0.5 w-full mt-8 z-0">
         {events.map((event) => (
-          <DisplayedEvent key={event._id} event={event} displayCurrentMonth={day.isCurrentMonth}/>
+          <DisplayedEvent key={event._id} event={event} displayCurrentMonth={day.isCurrentMonth} onEdit={() => onEditEvent(event)} onSave={onSave} onClose={onClose}/>
         ))}
       </div>
 
@@ -304,10 +335,30 @@ const CalendarCell = ({ day, events, emotions }: CalendarCellProps) => {
 interface DisplayedEventProps {
   event: Event;
   displayCurrentMonth : boolean
+  onEdit: () => void;
+  onSave: () => void;
+  onClose: () => void;
 }
 
-const DisplayedEvent = ({ event, displayCurrentMonth }: DisplayedEventProps) => {
- 
+const DisplayedEvent = ({ event, displayCurrentMonth, onEdit, onSave, onClose }: DisplayedEventProps) => {
+  const [showOptions, setShowOptions] = useState(false);
+
+  const toggleOptions = () => {
+    setShowOptions(!showOptions);
+  };
+
+  const handleEdit = () => {
+    setShowOptions(false);
+    onEdit();
+  };
+
+  const handleDelete = async () => {
+    await deleteEvents(event._id);
+    setShowOptions(false);
+    onSave();
+    onClose();
+  };
+
   const eventColors: { [key: number]: string } = {
     0: 'bg-[#CF1F1F]',
     1: 'bg-[#6BCB77]',
@@ -328,10 +379,18 @@ const DisplayedEvent = ({ event, displayCurrentMonth }: DisplayedEventProps) => 
 
   return (
     <div
+    onClick={toggleOptions}
     className={`${displayCurrentMonth ? "flex items-center gap-1 text-xs text-black text-[20px] p-0.5 rounded-md bg-opacity-80 w-full h-[50px] overflow-hidden whitespace-nowrap" : ''}`}>
       <div className={`${displayCurrentMonth ? `w-4 h-4 rounded-full flex-shrink-0 ${colorClass}` : ''}`}></div> {/* Color circle */}
       <p className="font-fredoka text-[15px] flex-shrink-0">{formattedStartTime}</p> {/* Hour and minute interval with AM/PM */}
       <p className="flex-shrink-0 text-[15px]">{event.title}</p> {/* Event title */}
+
+      {showOptions && (
+        <div className="absolute z-10 bg-white shadow-md rounded-md p-2 right-0">
+          <button className="text-sm text-purple-600 pr-2" onClick={handleEdit}>Edit</button> 
+          <button className="text-sm text-red-600" onClick={handleDelete}>Delete</button> 
+        </div>
+      )}
     </div>
   );
 };
