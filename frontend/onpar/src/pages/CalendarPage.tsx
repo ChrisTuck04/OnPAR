@@ -16,7 +16,7 @@ import type { AxiosError } from "axios";
 import type { Emotions } from "../types/Emotions"
 // @ts-expect-error events interface import
 import {createEmotion, readEmotions, updateEmotions} from "../api/emotions"
-import {startOfDay, endOfDay, set} from 'date-fns';
+import {startOfDay, endOfDay} from 'date-fns';
 
 
 const CalendarPage = () => {
