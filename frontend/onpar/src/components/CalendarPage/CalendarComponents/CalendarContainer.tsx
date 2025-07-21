@@ -4,7 +4,7 @@ import WeekCalendar from "./WeekCalendar"
 import CalendarMenu from "./CalendarMenu"
 import { useState } from "react"
 import EventForm from "../../EventsComponents/EventForm"
-
+import { motion } from "framer-motion"
 let View = "Month"
 
 interface Props {
@@ -65,8 +65,12 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
   }
 
   return (
-    <div className="flex row w-screen h-screen bg-[#F9F3EF]">
-
+    <motion.div
+     className="flex row w-screen h-screen bg-[#F9F3EF]"
+     initial={{ opacity: 0 }}
+     animate={{ opacity: 1}}
+     exit={{ opacity: 0}}
+     >
         {eventForm && <EventForm
           exitEventForm={exitEventForm} goToCalendarMenu={CalendarMenuVisibility} triggerNewEventsRetrieval={() => setRefreshKey(prev => prev + 1)}/>}
 
@@ -82,7 +86,7 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
 				{monthView && <WholeCalendar eventVersion={refreshKey}/>}
         {dayView && <DayCalendar/>}
         {weekView && <WeekCalendar/>}
-    </div>
+    </motion.div>
   )
 }
 

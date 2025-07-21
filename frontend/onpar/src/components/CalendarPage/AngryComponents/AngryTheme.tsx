@@ -7,6 +7,14 @@ const AngryTheme = () => {
         <Rain/>
       </div>
 
+      <div className="absolute top-0 left-0 w-full h-full bg-black opacity-55 z-10"></div>
+      <img className="absolute bottom-[7.5vh] right-[14vw] z-20 w-[9vw] h-auto rotate-[deg]" src="/assets/fire3.png" alt="Fire" />
+      <img className="absolute bottom-[7.5vh] right-[25vw] z-20 w-[6vw] h-auto rotate-[deg]" src="/assets/fire3.png" alt="Fire" />
+
+
+
+
+
       <img className="absolute top-[25px] w-[800px] z-[0] left-1/2 -translate-x-1/2" src="/assets/blackClouds.png" alt="" />
     </div>
   )
