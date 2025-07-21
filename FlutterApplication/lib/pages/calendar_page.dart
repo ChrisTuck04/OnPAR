@@ -634,6 +634,35 @@ class _CalendarPageState extends State<CalendarPage> {
     _showEmotionDialog(emotion: _selectedEmotion.value);
   }
 
+  void _deleteConfirmation(actionType) {
+    showDialog(
+      context: context, 
+      builder: (context) =>
+        StatefulBuilder(
+          builder: (context, setState) => 
+            AlertDialog(
+              scrollable: true,
+              title: Text("Are you sure you want to delete?"),
+              actions: [
+                ElevatedButton(
+                  onPressed: () => {
+                    actionType.runtimeType == Event 
+                      ? _deleteEvent(actionType) 
+                      : _deleteEmotion(actionType),
+                    Navigator.pop(context),
+                  },
+                  child: Text("Confirm"),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("Cancel"),
+                )
+              ],
+            ),
+          ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -746,7 +775,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.red),
-                        onPressed: () => _deleteEmotion(emotion),
+                        onPressed: () => _deleteConfirmation(emotion),
                       ),
                     ],
                   ),
@@ -810,7 +839,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                 onPressed: () =>
                                     _showEventDialog(event: event)),
                             IconButton(icon: const Icon(Icons.delete),
-                                onPressed: () => _deleteEvent(event)),
+                                onPressed: () => _deleteConfirmation(event)),
                           ],
                         ),
                       ),
