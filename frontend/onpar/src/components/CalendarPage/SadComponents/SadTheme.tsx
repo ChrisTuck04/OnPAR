@@ -9,6 +9,8 @@ const SadTheme = () => {
         <Rain/>
       </div>
 
+      <div className="absolute top-0 left-0 w-full h-full bg-black opacity-25 z-10"></div>
+
       <img className="absolute top-[25px] w-[800px] z-[0] left-1/2 -translate-x-1/2" src="/assets/SadClouds.png" alt="" />
     </div>
     

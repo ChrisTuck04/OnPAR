@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 interface Props{
     Happy: (e: React.MouseEvent<HTMLButtonElement>) => void
     Pleasant: (e: React.MouseEvent<HTMLButtonElement>) => void
@@ -10,12 +11,16 @@ interface Props{
 
 const EmotionCard = ({Happy, Pleasant, Sad, Angry, toggleJournalView, changeEmotionField}: Props) => {
     return (
-			<div className="flex items-center justify-center border-[10px] border-onparOrange bg-onparLightYellow w-[700px] h-[400px] rounded-[40px] font-fredoka">
+			<motion.div className="flex items-center justify-center border-[10px] border-onparOrange bg-onparLightYellow w-[700px] h-[400px] rounded-[40px] font-fredoka"
+			initial={{ opacity: 0 }}
+			animate={{ opacity: 1}}
+			exit={{ opacity: 0}}
+			>
 				<p className="absolute top-[80px] text-[30px]" style={{WebkitTextStroke: "1px #FFAA00"}}>
 						How are We Feeling Today?
 				</p>
 
-				<div className="absolute grid grid-cols-4 ">
+				<motion.div className="absolute grid grid-cols-4 ">
 						
 					<EmotionButton
 					image="/assets/HappyEmotion.png"
@@ -49,8 +54,8 @@ const EmotionCard = ({Happy, Pleasant, Sad, Angry, toggleJournalView, changeEmot
 					openJournal={toggleJournalView}
 					changeEmotionField={changeEmotionField}/> 
 						
-				</div>
-			</div>
+				</motion.div>
+			</motion.div>
     )
 }
 
