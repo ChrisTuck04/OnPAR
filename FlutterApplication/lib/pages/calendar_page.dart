@@ -646,9 +646,15 @@ class _CalendarPageState extends State<CalendarPage> {
               actions: [
                 ElevatedButton(
                   onPressed: () => {
-                    actionType.runtimeType == Event 
-                      ? _deleteEvent(actionType) 
-                      : _deleteEmotion(actionType),
+                    if(actionType.runtimeType == Event) {
+                      _deleteEvent(actionType),
+                    }
+                    else if (actionType.runtimeType == Emotion) {
+                      _deleteEmotion(actionType),
+                    }
+                    else {
+                      logger.e("Invalid type passed to delete command: ${actionType.runtimeType}")
+                    },
                     Navigator.pop(context),
                   },
                   child: Text("Confirm"),
