@@ -114,6 +114,7 @@ const CalendarPage = () => {
     try {
       const user = await getUser()
       setUserId(user._id)
+      setUserName(user.firstName)
     } catch (err : unknown) {
       const error = err as AxiosError<{error : string}>
       alert(error.response?.data?.error || "retrieving user first name failed")

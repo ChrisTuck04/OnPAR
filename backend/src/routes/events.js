@@ -125,7 +125,7 @@ router.post("/update-event", authenticateToken, async (req, res) => {
 
 // Read Events API
 router.post("/read-event", authenticateToken, async (req, res) => {
-  userId = req.user.id;
+  const userId = req.user.id;
   const { startDate, endDate } = req.body;
 
   if (!startDate || !endDate) {
@@ -167,6 +167,7 @@ router.post("/read-event", authenticateToken, async (req, res) => {
             }
           ]
       },
+      
       {
         sharedEmails: userEmail,
         $or: [
@@ -182,6 +183,7 @@ router.post("/read-event", authenticateToken, async (req, res) => {
           }
         ]
       }
+      
       ]
     }).sort({startTime: 1 });
 

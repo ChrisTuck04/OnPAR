@@ -30,6 +30,7 @@ interface Props {
     hideInput: () => void, // Add this parameter
     showButton: () => void // Add this parameter
   ) => void
+  triggerNewEventsRetrieval? : () => void
 }
 
 const isValidMMDDFormat = (date : string) : boolean => {
@@ -41,7 +42,7 @@ const isValidMMDDFormat = (date : string) : boolean => {
     
   }
 
-const EventForm = ({exitEventForm, goToCalendarMenu} : Props) => {
+const EventForm = ({exitEventForm, goToCalendarMenu, triggerNewEventsRetrieval} : Props) => {
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null) 
   //const [events, setEvents] = useState<Events[]>([])
@@ -283,7 +284,9 @@ const EventForm = ({exitEventForm, goToCalendarMenu} : Props) => {
       console.log("Submitting event:", event); // For debugging
       const response = await createEvents(event); // Pass the entire event object
       console.log("Event created successfully:", response);
-      // Optional: Reset form or redirect
+
+      triggerNewEventsRetrieval?.() //notifies useEffect in WholeCalendar to re-retrieve new array of events
+      
       setEvent((prevEvent : Event) => ({
         ...prevEvent, // Spread the previous event state to retain existing properties
         title: "",

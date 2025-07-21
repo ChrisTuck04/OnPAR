@@ -18,6 +18,7 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
   const [dayView, setDayView] = useState(false)
   const [eventForm, setEventForm] = useState(false)
   const [calendarMenu, setCalendarMenu] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const MonthViewValid = (e : React.MouseEvent<HTMLButtonElement>) => {
     setMonthView(true)
@@ -67,7 +68,7 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
     <div className="flex row w-screen h-screen bg-[#F9F3EF]">
 
         {eventForm && <EventForm
-          exitEventForm={exitEventForm} goToCalendarMenu={CalendarMenuVisibility}/>}
+          exitEventForm={exitEventForm} goToCalendarMenu={CalendarMenuVisibility} triggerNewEventsRetrieval={() => setRefreshKey(prev => prev + 1)}/>}
 
 				{calendarMenu && <CalendarMenu 
           openEventForm={CalendarMenuVisibility}
@@ -78,7 +79,7 @@ const CalendarContainer = ({ExitCalendar} : Props) => {
           currentView={View}/>
         }
 
-				{monthView && <WholeCalendar/>}
+				{monthView && <WholeCalendar eventVersion={refreshKey}/>}
         {dayView && <DayCalendar/>}
         {weekView && <WeekCalendar/>}
     </div>
