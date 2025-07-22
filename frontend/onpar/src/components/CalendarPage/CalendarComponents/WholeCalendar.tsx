@@ -30,7 +30,7 @@ interface Event {
 }
 
 // @ts-expect-error readEvents, updateEvents, deleteEvents are from a JS file
-import { readEvents, updateEvents, deleteEvents } from "../../../api/events";
+import { readEvents, deleteEvents } from "../../../api/events";
 import { AxiosError } from 'axios';
 import { EditEventModal } from '../../EventsComponents/EditEventModal';
 
@@ -191,14 +191,10 @@ const CalendarGrid = ({ currentDate, version, eventVersion, onEditEvent, onSave,
   // Function to retrieve array of emotions
   const retrieveEmotions = async () => {
     try {
-      // Assuming readEmotions also takes date range and returns an object with an 'emotions' array
-      // If your backend API for emotions doesn't have a date field, then this filtering might not be precise.
-      // For now, I'm using a broad date range similar to events.
-      // In a real application, you'd want to fetch emotions for the specific month.
       const response = await readEmotions("2015-07-20T00:00:00Z", "2035-07-20T00:00:00Z")
-      const retrievedEmotions = response.emotions // Assuming response.emotions contains the array
+      const retrievedEmotions = response.emotions
 
-      if(Array.isArray(retrievedEmotions)) { // Corrected variable name here
+      if(Array.isArray(retrievedEmotions)) { 
         setEmotions(retrievedEmotions)
       } else {
         console.error("readEmotions did not return an array in the 'emotions' property:", retrievedEmotions)
@@ -248,14 +244,8 @@ const CalendarGrid = ({ currentDate, version, eventVersion, onEditEvent, onSave,
           );
         }) : []; // If events is not an array, default to an empty array
 
-        // Filter emotions that were made on the current calendar cell's date
-        // IMPORTANT: The 'Emotions' interface in Emotions.ts does not have a date field.
-        // I am assuming here that the actual emotion objects returned by the API
-        // will have a 'createdAt' or 'date' field that can be used for filtering.
-        // If not, you will need to add a date field to your Emotions schema and API.
         const emotionsForDay = Array.isArray(emotions) ? emotions.filter(emotion => {
-          // Assuming 'createdAt' is the field that stores the date the emotion was made
-          // If your emotion object has a different date field (e.g., 'dateMade'), adjust this.
+         
           const emotionDate = new Date(emotion.createdAt); // Use 'createdAt' or 'date'
           return (
             emotionDate.getDate() === day.date.getDate() &&
