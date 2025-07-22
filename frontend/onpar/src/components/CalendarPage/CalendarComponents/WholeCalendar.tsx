@@ -36,6 +36,7 @@ import { EditEventModal } from '../../EventsComponents/EditEventModal';
 
 interface WholeCalendarProps {
   eventVersion : number
+  version: number
 }
 
 const WholeCalendar = ({eventVersion} : WholeCalendarProps) => {
@@ -73,7 +74,7 @@ const WholeCalendar = ({eventVersion} : WholeCalendarProps) => {
         goToNextMonth={goToNextMonth}
       />
       
-      <CalendarGrid currentDate={currentDate} eventVersion={eventVersion} onEditEvent={handleEditClick} onSave={handleSave} onClose={handleClose}/>
+      <CalendarGrid currentDate={currentDate} version={version} eventVersion={eventVersion} onEditEvent={handleEditClick} onSave={handleSave} onClose={handleClose}/>
       
       {showModal && selectedEvent && (
         <EditEventModal
@@ -141,12 +142,13 @@ const CalendarHeading = ({
 interface CalendarGridProps {
   currentDate: Date;
   eventVersion : number
+  version: number
   onEditEvent: (event: Event) => void;
   onSave: () => void;
   onClose: () => void;
 }
 
-const CalendarGrid = ({ currentDate, eventVersion, onEditEvent, onSave, onClose }: CalendarGridProps) => {
+const CalendarGrid = ({ currentDate, version, eventVersion, onEditEvent, onSave, onClose }: CalendarGridProps) => {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [emotions, setEmotions] = useState<Emotions[]>([]) 
@@ -184,7 +186,7 @@ const CalendarGrid = ({ currentDate, eventVersion, onEditEvent, onSave, onClose 
   // useEffect to re-run events retrieval function when eventVersion changes
   useEffect(() => {
     retrieveEvents();
-  }, [eventVersion, currentDate]); // Added currentDate to dependency array to re-fetch on month change
+  }, [version, eventVersion, currentDate]); // Added currentDate to dependency array to re-fetch on month change
 
   // Function to retrieve array of emotions
   const retrieveEmotions = async () => {
