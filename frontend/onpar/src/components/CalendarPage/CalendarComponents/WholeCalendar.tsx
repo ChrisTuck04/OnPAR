@@ -289,7 +289,16 @@ const CalendarCell = ({ day, events, emotions, onEditEvent, onSave, onClose }: C
       key={day.date.toISOString()}
       className={`relative border-[2px] font-fredoka border-onparOrange flex flex-col items-start p-1 hover:bg-onparOrange overflow-hidden
       ${!day.isCurrentMonth ? 'text-transparent' : ''} 
+
+      transition-all duration-300 ease-in-out
+      hover:z-50
+      hover:overflow-visible
+      hover:w-[250px]
+      hover:h-[300px]
+      hover:shadow-lg
+      hover:rounded-lg
       `}
+      style={{ minHeight: '100px', width: 'auto' }}
     >
       {/* Day number */}
       <p
