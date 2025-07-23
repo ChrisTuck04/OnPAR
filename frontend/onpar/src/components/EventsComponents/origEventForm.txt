@@ -215,7 +215,7 @@ const EventForm = ({exitEventForm, goToCalendarMenu, triggerNewEventsRetrieval} 
       alert("Please enter a valid date")
     else {
       const currentYear = new Date().getFullYear()
-      const fullDateString = `${currentYear}-${recurEndDate}T00:00:00`
+      const fullDateString = `${currentYear}-${recurEndDate.padStart(2,'0')}T00:00:00`
       const parsedDate = new Date(fullDateString)
 
       console.log("Debug recurEndDate:", recurEndDate);
@@ -462,6 +462,7 @@ const Recurring = ({handleRecurring, recurEndDateSegment, updateRecurEndDateSegm
             onClick={() => {
               setRecurEndDateButton(false)
               setRecurEndDateInputView(true)
+              setRecurEndDateButton()
             }}>
               End
             </button>

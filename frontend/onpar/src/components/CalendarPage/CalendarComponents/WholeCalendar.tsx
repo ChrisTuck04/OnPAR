@@ -9,6 +9,9 @@ import {
   isToday,
   getDate,
   addDays,
+  isBefore,
+  isAfter,
+  isSameDay,
 } from 'date-fns';
 
 // @ts-expect-error axios functions in js
@@ -27,6 +30,12 @@ interface Event {
   color: number; 
   recurDays: number[];
   recurEnd: string; 
+}
+
+// Extended interface for calendar display events (includes recurring instances)
+interface CalendarEvent extends Event {
+  displayDate?: Date; // The actual date this instance should be displayed
+  isRecurringInstance?: boolean; // Whether this is a recurring instance
 }
 
 // @ts-expect-error readEvents, updateEvents, deleteEvents are from a JS file
@@ -163,6 +172,99 @@ const CalendarGrid = ({ currentDate, version, eventVersion, onEditEvent, onSave,
 
   const prevMonthLastDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
 
+  // Function to generate recurring event instances
+  const generateRecurringEvents = (events: Event[]): CalendarEvent[] => {
+    const allEvents: CalendarEvent[] = [];
+
+    events.forEach(event => {
+      // Add the original event
+      allEvents.push({
+        ...event,
+        displayDate: new Date(event.startTime),
+        isRecurringInstance: false
+      });
+
+      // Debug logging
+      console.log('Processing event:', event.title, {
+        recurring: event.recurring,
+        recurDays: event.recurDays,
+        recurEnd: event.recurEnd,
+        hasRecurDays: event.recurDays && event.recurDays.length > 0
+      });
+
+      // Generate recurring instances if the event is recurring
+      if (event.recurring && event.recurDays && event.recurDays.length > 0 && event.recurEnd) {
+        console.log('Event is recurring, generating instances...');
+        const startDate = new Date(event.startTime);
+        const endDate = new Date(event.recurEnd);
+        
+        console.log('Dates:', {
+          startDate: startDate,
+          endDate: endDate,
+          recurEnd: event.recurEnd,
+          isValidEndDate: !isNaN(endDate.getTime()),
+          isValidStartDate: !isNaN(startDate.getTime())
+        });
+        
+        // Validate dates
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          console.error('Invalid dates for recurring event:', event.title);
+          return;
+        }
+        
+        // Start from the day after the original event
+        let currentDate = new Date(startDate);
+        currentDate.setDate(currentDate.getDate() + 1);
+
+        let instanceCount = 0;
+        let loopCount = 0;
+        const maxLoops = 365; // Safety net to prevent infinite loops
+        
+        // Generate instances until we reach or exceed the end date
+        while ((isBefore(currentDate, endDate) || isSameDay(currentDate, endDate)) && loopCount < maxLoops) {
+          const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+          
+          console.log(`Checking date: ${format(currentDate, 'yyyy-MM-dd')} (day of week: ${dayOfWeek}), recurDays includes: ${event.recurDays.includes(dayOfWeek)}`);
+          
+          // Check if this day of week is in the recurDays array
+          if (event.recurDays.includes(dayOfWeek)) {
+            instanceCount++;
+            console.log(`Creating recurring instance ${instanceCount} for ${format(currentDate, 'yyyy-MM-dd')} (day ${dayOfWeek})`);
+            
+            // Calculate the time difference for this recurring instance
+            const originalTime = new Date(event.startTime);
+            const recurringStartTime = new Date(currentDate);
+            recurringStartTime.setHours(originalTime.getHours());
+            recurringStartTime.setMinutes(originalTime.getMinutes());
+            recurringStartTime.setSeconds(originalTime.getSeconds());
+            
+            const originalEndTime = new Date(event.endTime);
+            const recurringEndTime = new Date(currentDate);
+            recurringEndTime.setHours(originalEndTime.getHours());
+            recurringEndTime.setMinutes(originalEndTime.getMinutes());
+            recurringEndTime.setSeconds(originalEndTime.getSeconds());
+
+            allEvents.push({
+              ...event,
+              startTime: recurringStartTime.toISOString(),
+              endTime: recurringEndTime.toISOString(),
+              displayDate: new Date(currentDate),
+              isRecurringInstance: true
+            });
+          }
+          
+          // Move to next day
+          currentDate.setDate(currentDate.getDate() + 1);
+          loopCount++;
+        }
+        
+        console.log(`Generated ${instanceCount} recurring instances for event: ${event.title} (looped ${loopCount} times)`);
+      }
+    });
+
+    return allEvents;
+  };
+
   // Function to retrieve array of events
   const retrieveEvents = async () => {
     try {
@@ -234,13 +336,16 @@ const CalendarGrid = ({ currentDate, version, eventVersion, onEditEvent, onSave,
   return (
     <div className="grid grid-cols-7 grid-rows-6 flex-grow justify-center text-center text-black text-fredoka rounded-b-[30px] overflow-hidden w-full h-full">
       {days.map((day, index) => {
-        const eventsForDay = Array.isArray(events) ? events.filter(event => {
-          const eventStartDate = new Date(event.startTime);
+        // Generate all recurring events first
+        const allEvents = generateRecurringEvents(events);
+        
+        const eventsForDay = Array.isArray(allEvents) ? allEvents.filter(event => {
+          const displayDate = event.displayDate || new Date(event.startTime);
           // Compare year, month, and date to ensure correct event filtering
           return (
-            eventStartDate.getDate() === day.date.getDate() &&
-            eventStartDate.getMonth() === day.date.getMonth() &&
-            eventStartDate.getFullYear() === day.date.getFullYear()
+            displayDate.getDate() === day.date.getDate() &&
+            displayDate.getMonth() === day.date.getMonth() &&
+            displayDate.getFullYear() === day.date.getFullYear()
           );
         }) : []; // If events is not an array, default to an empty array
 
@@ -266,7 +371,7 @@ interface CalendarCellProps {
     isCurrentMonth: boolean;
     isToday: boolean;
   };
-  events: Event[]; // Add events prop to CalendarCell
+  events: CalendarEvent[]; // Updated to use CalendarEvent type
   emotions: Emotions[]; // Add emotions prop to CalendarCell
   onEditEvent: (event: Event) => void;
   onSave: () => void;
@@ -316,8 +421,15 @@ const CalendarCell = ({ day, events, emotions, onEditEvent, onSave, onClose }: C
 
       {/* Events container */}
       <div className="flex flex-col gap-0.5 w-full mt-8 z-0">
-        {events.map((event) => (
-          <DisplayedEvent key={event._id} event={event} displayCurrentMonth={day.isCurrentMonth} onEdit={() => onEditEvent(event)} onSave={onSave} onClose={onClose}/>
+        {events.map((event, eventIndex) => (
+          <DisplayedEvent 
+            key={event.isRecurringInstance ? `${event._id}-recurring-${eventIndex}` : event._id} 
+            event={event} 
+            displayCurrentMonth={day.isCurrentMonth} 
+            onEdit={() => onEditEvent(event)} 
+            onSave={onSave} 
+            onClose={onClose}
+          />
         ))}
       </div>
 
@@ -334,7 +446,7 @@ const CalendarCell = ({ day, events, emotions, onEditEvent, onSave, onClose }: C
 };
 
 interface DisplayedEventProps {
-  event: Event;
+  event: CalendarEvent; // Updated to use CalendarEvent type
   displayCurrentMonth : boolean
   onEdit: () => void;
   onSave: () => void;
@@ -385,6 +497,7 @@ const DisplayedEvent = ({ event, displayCurrentMonth, onEdit, onSave, onClose }:
       <div className={`${displayCurrentMonth ? `w-4 h-4 rounded-full flex-shrink-0 ${colorClass}` : ''}`}></div> {/* Color circle */}
       <p className="font-fredoka text-[15px] flex-shrink-0">{formattedStartTime}</p> {/* Hour and minute interval with AM/PM */}
       <p className="flex-shrink-0 text-[15px]">{event.title}</p> {/* Event title */}
+      {event.isRecurringInstance && <span className="text-xs opacity-70">↻</span>} {/* Small indicator for recurring instances */}
 
       {showOptions && (
         <div className="absolute z-10 bg-white shadow-md rounded-md p-2 right-0">
