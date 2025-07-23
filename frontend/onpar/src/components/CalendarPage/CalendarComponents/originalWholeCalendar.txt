@@ -32,7 +32,6 @@ interface Event {
 // @ts-expect-error readEvents, updateEvents, deleteEvents are from a JS file
 import { readEvents, updateEvents, deleteEvents } from "../../../api/events";
 import { AxiosError } from 'axios';
-import { P } from 'framer-motion/dist/types.d-Bq-Qm38R';
 
 interface WholeCalendarProps {
   eventVersion : number
@@ -137,13 +136,13 @@ const CalendarGrid = ({ currentDate, eventVersion }: CalendarGridProps) => {
   // Function to retrieve array of events
   const retrieveEvents = async () => {
     try {
-      const events = await readEvents("2015-07-20T00:00:00Z", "2035-07-20T00:00:00Z");
-      const retrievedEvents = events.events
+      const response = await readEvents("2015-07-20T00:00:00Z", "2035-07-20T00:00:00Z");
+      const retrievedEvents = response.events
       
       if (Array.isArray(retrievedEvents)) {
         setEvents(retrievedEvents);
       } else {
-        console.error("readEvents did not return an array:", retrievedEvents);
+        console.error("readEvents did not return an array in the 'events' property:", retrievedEvents);
         setEvents([])
       }
 
@@ -162,26 +161,30 @@ const CalendarGrid = ({ currentDate, eventVersion }: CalendarGridProps) => {
   // Function to retrieve array of emotions
   const retrieveEmotions = async () => {
     try {
-      const emotions = await readEmotions("2015-07-20T00:00:00Z", "2035-07-20T00:00:00Z")
-      const retrievedEmotions = emotions.emotions
+      // Assuming readEmotions also takes date range and returns an object with an 'emotions' array
+      // If your backend API for emotions doesn't have a date field, then this filtering might not be precise.
+      // For now, I'm using a broad date range similar to events.
+      // In a real application, you'd want to fetch emotions for the specific month.
+      const response = await readEmotions("2015-07-20T00:00:00Z", "2035-07-20T00:00:00Z")
+      const retrievedEmotions = response.emotions // Assuming response.emotions contains the array
 
-      if(Array.isArray(retrieveEmotions))
+      if(Array.isArray(retrievedEmotions)) { // Corrected variable name here
         setEmotions(retrievedEmotions)
-      else {
-        console.error("readEmotions did not return an array:", retrievedEmotions)
+      } else {
+        console.error("readEmotions did not return an array in the 'emotions' property:", retrievedEmotions)
         setEmotions([])
       }
 
     } catch(err : unknown) {
       const error = err as AxiosError<{ error: string}>;
       console.error("Error retrieving emotions:", error.response?.data?.error || "Unknown error");
-      setEvents([]);
+      setEmotions([]); // Corrected: setEmotions instead of setEvents
     }
   }
 
   useEffect(() => {
     retrieveEmotions()
-  }, [currentDate])
+  }, [currentDate]) // Re-fetch emotions when month changes
 
   for (let i = numLeadingEmptyCells; i > 0; i--) {
     const day = addDays(prevMonthLastDay, -i + 1);
@@ -214,7 +217,24 @@ const CalendarGrid = ({ currentDate, eventVersion }: CalendarGridProps) => {
             eventStartDate.getFullYear() === day.date.getFullYear()
           );
         }) : []; // If events is not an array, default to an empty array
-        return <CalendarCell key={index} day={day} events={eventsForDay} emotions={} />;
+
+        // Filter emotions that were made on the current calendar cell's date
+        // IMPORTANT: The 'Emotions' interface in Emotions.ts does not have a date field.
+        // I am assuming here that the actual emotion objects returned by the API
+        // will have a 'createdAt' or 'date' field that can be used for filtering.
+        // If not, you will need to add a date field to your Emotions schema and API.
+        const emotionsForDay = Array.isArray(emotions) ? emotions.filter(emotion => {
+          // Assuming 'createdAt' is the field that stores the date the emotion was made
+          // If your emotion object has a different date field (e.g., 'dateMade'), adjust this.
+          const emotionDate = new Date(emotion.createdAt); // Use 'createdAt' or 'date'
+          return (
+            emotionDate.getDate() === day.date.getDate() &&
+            emotionDate.getMonth() === day.date.getMonth() &&
+            emotionDate.getFullYear() === day.date.getFullYear()
+          );
+        }) : [];
+
+        return <CalendarCell key={index} day={day} events={eventsForDay} emotions={emotionsForDay} />;
       })}
     </div>
   );
@@ -227,7 +247,7 @@ interface CalendarCellProps {
     isToday: boolean;
   };
   events: Event[]; // Add events prop to CalendarCell
-  emotions: Emotions[]
+  emotions: Emotions[]; // Add emotions prop to CalendarCell
 }
 
 const CalendarCell = ({ day, events, emotions }: CalendarCellProps) => {
@@ -235,32 +255,32 @@ const CalendarCell = ({ day, events, emotions }: CalendarCellProps) => {
     <div
       key={day.date.toISOString()}
       className={`relative border-[2px] font-fredoka border-onparOrange flex flex-col items-start p-1 hover:bg-onparOrange overflow-hidden
-      ${!day.isCurrentMonth ? 'text-transparent' : ''}
-      ${day.isToday ? 'text-black' : ''}
+      ${!day.isCurrentMonth ? 'text-transparent' : ''} 
       `}
     >
-      
-      <style>
-      {`
-        @keyframes blink {
-          0%   { background-color: #FFAA00; }
-          25%  { background-color: #FCD848; }
-          50%  { background-color: #FDC930; }
-          75%  { background-color: #FEB918; }
-          100% { background-color: #FFAA00; }
-        }
-        .animate-blink {
-          animation: blink 1s infinite;
-        }
-      `}
-      </style>
-
+      {/* Day number */}
       <p
       className={`${day.isCurrentMonth ? 'absolute top-1 left-1/2 transform -translate-x-1/2 w-[30px] h-[30px] rounded-full bg-onparOrange flex items-center justify-center text-sm' : ''}`}
       style={day.isToday ? {animation: 'blink 1s infinite', backgroundColor: 'bg-onparOrange'} : {}}
       >
         {getDate(day.date)}
       </p>
+
+      {/* CSS for the blinking animation */}
+      <style>
+        {`
+          @keyframes blink {
+            0%   { background-color: #FFAA00; }
+            25%  { background-color: #FCD848; }
+            50%  { background-color: #FDC930; }
+            75%  { background-color: #FEB918; }
+            100% { background-color: #FFAA00; }
+          }
+          .animate-blink {
+            animation: blink 1s infinite;
+          }
+        `}
+      </style>
 
       {/* Events container */}
       <div className="flex flex-col gap-0.5 w-full mt-8 z-0">
@@ -270,9 +290,10 @@ const CalendarCell = ({ day, events, emotions }: CalendarCellProps) => {
       </div>
 
       {/* Emotions container */}
-      <div>
-        {emotions.map((emotion) => (
-          <DisplayedEmotion emotion={emotion} displayCurrentMonth={day.isCurrentMonth} openJournalEntry={() => "hi"}/>
+      {/* Ensure emotions are only displayed if they belong to the current month */}
+      <div className="flex flex-col gap-0.5 w-full mt-1 z-0"> {/* Added mt-1 for slight separation */}
+        {emotions.map((emotion, emotionIndex) => (
+          <DisplayedEmotion key={emotion.title + emotionIndex} emotion={emotion} displayCurrentMonth={day.isCurrentMonth} />
         ))}
       </div>
 
@@ -317,35 +338,36 @@ const DisplayedEvent = ({ event, displayCurrentMonth }: DisplayedEventProps) => 
 
 interface DisplayedEmotionProps {
   emotion: Emotions;
-  displayCurrentMonth : boolean
-  openJournalEntry: () => void
+  displayCurrentMonth : boolean;
+  // openJournalEntry: () => void; // Removed as per request
 }
 
-const DisplayedEmotion = ({emotion, displayCurrentMonth, openJournalEntry} : DisplayedEmotionProps) => {
+const DisplayedEmotion = ({emotion, displayCurrentMonth} : DisplayedEmotionProps) => { // Removed openJournalEntry from props
 
   const emotionIcons: {[key: string]: string} = {
-    "happy" : '/assets/HappyEmotion.png',
-    "sad": '/assets/SadEmotion.png',
-    "angry": '/assets/AngryEmotion.png',
-    "pleasant": '/assets/PleasantEmotion.png',
+    "Happy" : '/assets/HappyEmotion.png',
+    "Sad": '/assets/SadEmotion.png',
+    "Angry": '/assets/AngryEmotion.png',
+    "Pleasant": '/assets/PleasantEmotion.png',
   } 
 
-  const emotionIcon = emotionIcons[emotion.emotion] || ''
+  const emotionIcon = emotionIcons[emotion.emotion] || '';
 
   return (
-    <div>
-      {displayCurrentMonth ? <button
-      className={`flex flex-row`}
-      onClick={openJournalEntry}>
+    displayCurrentMonth ? (
+      <button
+        className={`flex items-center gap-1 text-xs text-black p-0.5 rounded-md bg-opacity-80 w-full overflow-hidden whitespace-nowrap`}
+        // onClick={openJournalEntry} // Removed onClick as per request
+      >
         <img
-        className="w-[20px] h-[20px]"
-        src={emotionIcon}
-        alt="unable to display icon!" />
-        <p>
-          {emotion.title}
-        </p>
-      </button> : <p></p>}
-    </div>
+          className="w-4 h-4 flex-shrink-0" 
+          src={emotionIcon}
+          alt={`Emotion icon for ${emotion.emotion}`}
+          onError={(e) => { e.currentTarget.src = 'https://placehold.co/16x16/cccccc/000000?text=NA'; }} 
+        />
+        <p className="font-fredoka text-[15px] truncate">{emotion.title}</p> {/* Truncate long titles */}
+      </button>
+    ) : null // Render nothing if not current month
   )
 }
 
