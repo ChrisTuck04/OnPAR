@@ -183,7 +183,6 @@ const CalendarPage = () => {
           CardVisibility={CardVisibility} 
           CalendarVisibility={CalendarVisibility} 
           ReflectionVisibility={toggleJournalVisibility} 
-          FriendsListVisibility={()=> null}
           CloseDropdownMenu={CloseDropdownMenu}/>}
         </div>
 
