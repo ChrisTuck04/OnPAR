@@ -10,7 +10,6 @@ import {
   getDate,
   addDays,
   isBefore,
-  isAfter,
   isSameDay,
 } from 'date-fns';
 
