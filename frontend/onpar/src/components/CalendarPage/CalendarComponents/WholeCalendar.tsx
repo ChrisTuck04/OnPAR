@@ -489,7 +489,7 @@ const DisplayedEvent = ({ event, displayCurrentMonth, onEdit, onSave, onClose }:
 
   // Format start time to "hh:mm am/pm"
   const formattedStartTime = event.startTime ? format(new Date(event.startTime), 'hh:mm a') : '';
-  const formattedEndTime = event.endTime ? format(new Date(event.startTime), 'hh:mm a') : '';
+  const formattedEndTime = event.endTime ? format(new Date(event.endTime), 'hh:mm a') : '';
 
   return (
     <div
