@@ -489,6 +489,7 @@ const DisplayedEvent = ({ event, displayCurrentMonth, onEdit, onSave, onClose }:
 
   // Format start time to "hh:mm am/pm"
   const formattedStartTime = event.startTime ? format(new Date(event.startTime), 'hh:mm a') : '';
+  const formattedEndTime = event.endTime ? format(new Date(event.startTime), 'hh:mm a') : '';
 
   return (
     <div
@@ -496,6 +497,8 @@ const DisplayedEvent = ({ event, displayCurrentMonth, onEdit, onSave, onClose }:
     className={`${displayCurrentMonth ? "flex items-center gap-1 text-xs text-black text-[20px] p-0.5 rounded-md bg-opacity-80 w-full h-[50px] overflow-hidden whitespace-nowrap" : ''}`}>
       <div className={`${displayCurrentMonth ? `w-4 h-4 rounded-full flex-shrink-0 ${colorClass}` : ''}`}></div> {/* Color circle */}
       <p className="font-fredoka text-[15px] flex-shrink-0">{formattedStartTime}</p> {/* Hour and minute interval with AM/PM */}
+      <p className="font-fredoka h-[17px] w-[10px] flex-shrink-0">to</p> {/* Hour and minute interval with AM/PM */}
+      <p className="font-fredoka text-[15px] flex-shrink-0">{formattedEndTime}</p> {/* Hour and minute interval with AM/PM */}
       <p className="flex-shrink-0 text-[15px]">{event.title}</p> {/* Event title */}
       {event.isRecurringInstance && <span className="text-xs opacity-70">↻</span>} {/* Small indicator for recurring instances */}
 
