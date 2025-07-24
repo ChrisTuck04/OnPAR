@@ -419,6 +419,14 @@ const CalendarCell = ({ day, events, emotions, onEditEvent, onSave, onClose }: C
         `}
       </style>
 
+      {/* Emotions container */}
+      {/* Ensure emotions are only displayed if they belong to the current month */}
+      <div className="flex flex-col gap-0.5 w-full mt-1 z-0"> {/* Added mt-1 for slight separation */}
+        {emotions.map((emotion, emotionIndex) => (
+          <DisplayedEmotion key={emotion.title + emotionIndex} emotion={emotion} displayCurrentMonth={day.isCurrentMonth} />
+        ))}
+      </div>
+
       {/* Events container */}
       <div className="flex flex-col gap-0.5 w-full mt-8 z-0">
         {events.map((event, eventIndex) => (
@@ -430,14 +438,6 @@ const CalendarCell = ({ day, events, emotions, onEditEvent, onSave, onClose }: C
             onSave={onSave} 
             onClose={onClose}
           />
-        ))}
-      </div>
-
-      {/* Emotions container */}
-      {/* Ensure emotions are only displayed if they belong to the current month */}
-      <div className="flex flex-col gap-0.5 w-full mt-1 z-0"> {/* Added mt-1 for slight separation */}
-        {emotions.map((emotion, emotionIndex) => (
-          <DisplayedEmotion key={emotion.title + emotionIndex} emotion={emotion} displayCurrentMonth={day.isCurrentMonth} />
         ))}
       </div>
 
