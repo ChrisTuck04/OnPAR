@@ -33,6 +33,8 @@ migrate_working_dir/
 .pub/
 /build/
 */.env
+*/upload-keystore.jks
+*/key.properties
 
 # Symbolication related
 app.*.symbols

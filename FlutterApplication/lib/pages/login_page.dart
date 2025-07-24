@@ -37,9 +37,6 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.statusCode == 200) {
-        print("--- RAW LOGIN RESPONSE ---");
-        print(response.body);
-        print("--------------------------");
         final data = jsonDecode(response.body);
 
         final token = data['token'];
@@ -116,10 +113,14 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isLoading ? null : _login,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  foregroundColor: Colors.black,
+                  backgroundColor: Colors.amber,
+                ),
                 child: _isLoading ? const CircularProgressIndicator() : const Text('Login', style: TextStyle(fontSize: 16)),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _openRegister,
                 style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),

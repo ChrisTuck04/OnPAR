@@ -816,9 +816,9 @@ class _CalendarPageState extends State<CalendarPage> {
                           children: [
                             if (event.content.isNotEmpty) Text(event.content),
                             Text('From: ${DateFormat('h:mm a').format(
-                                event.startTime.toLocal())}'),
+                                event.startTime)}'),
                             Text('To: ${DateFormat('h:mm a').format(
-                                event.endTime.toLocal())}'),
+                                event.endTime)}'),
                             if (event.recurring)
                               Text('Repeats on: ${event.recurDays?.map((d) =>
                               [
